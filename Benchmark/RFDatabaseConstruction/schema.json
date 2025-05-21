@@ -1,0 +1,74 @@
+{
+    "reference_fact_db": {
+        "join_tables": [
+            "nba_player_information",
+            "nba_team_information",
+            "nba_player_award",
+            "nba_player_affiliation",
+            "nba_draft_combine_stats",
+            "nba_champion_history",
+            "nba_game_information",
+            "nba_player_game_stats",
+            "nba_team_game_stats"
+        ],
+        "join_keys": {
+            "nba_player_information": [
+                "player_name"
+            ],
+            "nba_team_information": [
+                "team_name"
+            ],
+            "nba_player_award": [
+                "player_name"
+            ],
+            "nba_player_affiliation": [
+                "player_name",
+                "team_name"
+            ],
+            "nba_draft_combine_stats": [
+                "player_id"
+            ],
+            "nba_champion_history": [
+                "mvp_player_name",
+                "western_champion_name",
+                "eastern_champion_name",
+                "nba_champion_name",
+                "nba_vice_champion_name"
+            ],
+            "nba_game_information": [
+                "summary_id",
+                "home_team_name",
+                "visitor_team_name"
+            ],
+            "nba_player_game_stats": [
+                "player_name",
+                "summary_id"
+            ],
+            "nba_team_game_stats": [
+                "team_name",
+                "summary_id"
+            ]
+        },
+        "join_clauses": [
+            "nba_game_information.home_team_name=nba_team_information.team_name",
+            "nba_game_information.visitor_team_name=nba_team_information.team_name",
+            "nba_player_award.player_name=nba_player_information.player_name",
+            "nba_player_game_stats.player_name=nba_player_information.player_name",
+            "nba_player_game_stats.summary_id=nba_game_information.summary_id",
+            "nba_player_affiliation.player_name=nba_player_information.player_name",
+            "nba_player_affiliation.team_name=nba_team_information.team_name",
+            "nba_team_game_stats.team_name=nba_team_information.team_name",
+            "nba_team_game_stats.summary_id=nba_game_information.summary_id",
+            "nba_draft_combine_stats.player_name=nba_player_information.player_name",
+            "nba_champion_history.mvp_player_name=nba_player_information.player_name",
+            "nba_champion_history.western_champion_name=nba_team_information.team_name",
+            "nba_champion_history.eastern_champion_name=nba_team_information.team_name",
+            "nba_champion_history.nba_champion_name=nba_team_information.team_name",
+            "nba_champion_history.nba_vice_champion_name=nba_team_information.team_name"
+        ],
+        "dataset": "reference_fact_db",
+        "join_root": "nba_game_information",
+        "join_how": "outer",
+        "use_cols": "reference_fact_db"
+    }
+}
