@@ -20,7 +20,7 @@ CATEGORIES:
 FOREIGN_KEYS:
 approach_name: postorder
 # approach_name options: oneshotk (one-shot-k), postorder (post-order)
-is_prov: false
+is_prov: true
 
 hyperparams:
   prob_where: 1.0
