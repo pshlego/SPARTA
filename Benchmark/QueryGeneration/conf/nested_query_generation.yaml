@@ -1,7 +1,7 @@
 db: reference_fact_db
 port: 5437
 llm_addr: http://141.223.197.39:30000/generate
-num_queries: 250
+num_queries: 50
 is_bulk: false
 num_queries_per_iter: 1
 debug: true
@@ -10,14 +10,17 @@ output_path: /root/sparta/Benchmark/QueryGeneration/results/debug.out
 log_path: /root/sparta/Benchmark/QueryGeneration/results/debug.log
 dtype_path: /root/sparta/Benchmark/RFDatabaseConstruction/dtype_dict.json
 schema_path: /root/sparta/Benchmark/RFDatabaseConstruction/schema.json
+inner_query_block_wo_agg_path: /root/sparta/Benchmark/QueryGeneration/results/wo_agg.out
+inner_query_block_w_agg_path: /root/sparta/Benchmark/QueryGeneration/results/w_agg.out
 table_info:
 IDS:
 HASH_CODES:
 NOTES:
 CATEGORIES:
 FOREIGN_KEYS:
-approach_name: eg
-# approach_name options: oneshot (one-shot), cbc (clause-by-clause), exec (execution-guided)
+approach_name: oneshotk
+# approach_name options: oneshotk (one-shot-k), postorder (post-order)
+is_prov: false
 
 hyperparams:
   prob_where: 1.0
@@ -25,8 +28,13 @@ hyperparams:
   prob_having: 1.0
   prob_order: 1.0
   prob_limit: 1.0
-  is_agg: false
+  candidate_num: 3
+  sample_size: 5
   max_clause_gen_count: 3
+  is_agg: false
+  height: 2
+  max_nested_predicate_gen_count: 1000
+  nested_predicate_types: [type-a, type-n]
 
 llm_hyperparams:
   temperature: 0.5

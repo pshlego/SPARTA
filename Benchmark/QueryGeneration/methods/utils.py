@@ -11,6 +11,279 @@ DATE_AGGS = ["COUNT", "MIN", "MAX"]
 KEY_AGGS = ["COUNT"]
 NUMERIC_AGGS = ["COUNT", "MIN", "MAX", "AVG", "SUM"]
 
+def post_process_nested_predicate(sql):
+    if sql.strip().lower().startswith("where"):
+        return sql.strip()[len("WHERE"):].strip()
+    elif sql.strip().lower().startswith("select"):
+        parsed = parse_one(sql)
+
+        from_expr = parsed.args.get("from")
+        if not from_expr:
+            return ""
+
+        outer_table_name = str(from_expr.this)
+
+        outer_alias = from_expr.alias
+
+        where_expr = parsed.args.get("where")
+        if not where_expr:
+            return ""
+
+        for col in where_expr.find_all(exp.Column):
+            if (not col.table) or (outer_alias and col.table == outer_alias):
+                col.set('table', outer_table_name)
+
+        fully_qualified_predicate = str(where_expr)
+        return fully_qualified_predicate[len("WHERE"):].strip()
+    else:
+        return sql.strip()
+
+def get_aliases_in_select(select_node: exp.Select) -> set[str]:
+    aliases = set()
+    from_clause = select_node.args.get("from")
+    if isinstance(from_clause, exp.From):
+        for fexpr in from_clause.expressions:
+            if isinstance(fexpr, exp.Table):
+                if fexpr.alias:
+                    aliases.add(fexpr.alias)
+                else:
+                    aliases.add(fexpr.name)
+            elif isinstance(fexpr, exp.Subquery):
+                if fexpr.alias:
+                    aliases.add(fexpr.alias)
+
+    for join in select_node.find_all(exp.Join):
+        join_obj = join.this
+        if isinstance(join_obj, exp.Table):
+            if join_obj.alias:
+                aliases.add(join_obj.alias)
+            else:
+                aliases.add(join_obj.name)
+        elif isinstance(join_obj, exp.Subquery):
+            if join_obj.alias:
+                aliases.add(join_obj.alias)
+
+    return aliases
+
+
+def classify_subquery(subquery: exp.Select) -> str:
+    join = has_join(subquery)
+    agg = has_aggregation_str_based(subquery)
+
+    if join:
+        return "Type-JA" if agg else "Type-J"
+    else:
+        return "Type-A" if agg else "Type-N"
+
+def has_join(select_node: exp.Select) -> bool:
+    where_expr = select_node.args.get("where")
+    if not where_expr or not where_expr.this:
+        return False
+    for condition in walk_without_subquery(where_expr.this):
+        if isinstance(condition, exp.EQ):
+            left = condition.args.get("this")
+            right = condition.args.get("expression")
+            if isinstance(left, exp.Column) and isinstance(right, exp.Column):
+                return True
+    return False
+
+def walk_without_subquery(expr):
+    if isinstance(expr, (exp.Subquery, exp.Exists, exp.In)):
+        return
+    yield expr
+    for arg in expr.args.values():
+        if isinstance(arg, list):
+            for item in arg:
+                if isinstance(item, exp.Expression):
+                    yield from walk_without_subquery(item)
+        elif isinstance(arg, exp.Expression):
+            yield from walk_without_subquery(arg)
+
+def has_aggregation_str_based(select_node: exp.Select) -> bool:
+    for projection in select_node.expressions:
+        projection = str(projection)
+        if projection.upper().startswith("SUM") or projection.upper().startswith("COUNT") or projection.upper().startswith("MAX") or projection.upper().startswith("MIN") or projection.upper().startswith("AVG"):
+            return True
+    return False
+
+def detect_type_of_nested_predicate(sql_with_nested_predicate):
+    stype_list = []
+    parsed = parse_one(sql_with_nested_predicate)
+    subquery_nodes = list(parsed.find_all((exp.Subquery, exp.Exists)))
+
+    for i, node in enumerate(subquery_nodes, start=1):
+        if isinstance(node.this, exp.Select):
+            subquery_select = node.this
+            stype = classify_subquery(subquery_select)
+            stype_list.append(stype.lower())
+    
+    return stype_list
+
+def generate_from_clause_for_full_outer_view(args, schema=None, relations=None, join_clause_list=None, is_inner_join=False):
+    visited_join_clauses = []
+    visited_tables = [schema["join_root"]] if relations is None else relations[:1]
+    join_clauses = schema["join_clauses"] if join_clause_list is None else join_clause_list
+    from_clause = f"""{schema["join_root"]}""" if relations is None else f"""{relations[0]}"""
+    
+    while len(visited_join_clauses) < len(join_clauses):
+        if relations is not None and (len(visited_join_clauses) == len(relations) - 1):
+            break
+        is_updated = False
+        for table in visited_tables:
+            for join_clause in join_clauses:
+                if join_clause in visited_join_clauses:
+                    continue
+                
+                key1 = join_clause.split("=")[0]
+                key2 = join_clause.split("=")[1]
+                tab1 = key1.split(".")[0]
+                tab2 = key2.split(".")[0]
+                
+                if relations is not None and (tab1 not in relations or tab2 not in relations):
+                    continue
+                
+                if tab1 == table:
+                    if tab2 in visited_tables:
+                        args.logger.warning("cyclic join")
+                        from_clause += f" AND {join_clause}"
+                    else:
+                        from_clause += f" FULL OUTER JOIN {tab2} ON {join_clause}" if not is_inner_join else f" INNER JOIN {tab2} ON {join_clause}"
+                        visited_tables.append(tab2)
+                    is_updated = True
+                    visited_join_clauses.append(join_clause)
+    
+                if tab2 == table:
+                    if tab1 in visited_tables:
+                        args.logger.warning("cyclic join")
+                        from_clause += f" AND {join_clause}"
+                    else:
+                        from_clause += f" FULL OUTER JOIN {tab1} ON {join_clause}" if not is_inner_join else f" INNER JOIN {tab1} ON {join_clause}"
+                        visited_tables.append(tab1)
+                    is_updated = True
+                    visited_join_clauses.append(join_clause)
+
+        if not is_updated:
+            # Not connected join
+            args.logger.error("Not supported error: Cartesian Product on FROM clause")
+            assert False
+    
+    return from_clause
+
+def from_clause_to_dict(from_clause: str) -> dict:
+    query = f"SELECT * {from_clause}"
+    parsed = parse_one(query)
+    
+    table_nodes = parsed.find_all(exp.Table)
+    
+    results = {}
+    for node in table_nodes:
+        table_name = node.name
+        alias = node.alias or table_name
+        results[table_name] = alias
+    
+    return results
+
+def extract_tables(from_clause: str) -> list[str]:
+    
+    query = f"SELECT * {from_clause}"
+    parsed = parse_one(query)
+
+    tables = [table.name for table in parsed.find_all(exp.Table)]
+    return tables
+
+def bfs(edges, parents, observed, targets):
+    candidates = []
+    cp_condition = {}
+    for p in parents:
+        childs = edges[p]
+        for c, join_clause in childs:
+            if c in targets:
+                return [c, p], [join_clause]
+            else:
+                if c in observed:
+                    continue
+                else:
+                    candidates.append(c)
+                    observed.append(c)
+                    cp_condition[c] = (p, join_clause)
+    assert len(candidates) > 0
+    path, joins = bfs(edges, candidates, observed, targets)
+    src_parent, src_join = cp_condition[path[-1]]
+    path.append(src_parent)
+    joins.append(src_join)
+    return path, joins
+
+def find_join_path(joins, tables, used_tables):
+    # Step 1. Draw schema graph
+    edges = {}
+    for join_clause in joins:
+        t1, t2 = get_table_from_clause(join_clause)
+        if t1 in edges:
+            edges[t1].append((t2, join_clause))
+        else:
+            edges[t1] = [(t2, join_clause)]
+        if t2 in edges:
+            edges[t2].append((t1, join_clause))
+        else:
+            edges[t2] = [(t1, join_clause)]
+
+    used_tables = list(used_tables)
+    found_tables = [used_tables[0]]
+    found_joins = []
+    for tab in used_tables[1:]:
+        path, joins = bfs(edges, [tab], [], found_tables)
+        found_tables = list(set(found_tables) | set(path))
+        found_joins = list(set(found_joins) | set(joins))
+
+    return found_tables, found_joins
+
+
+def get_table_from_clause(join_clause):
+    A, B = join_clause.split("=")
+    return A.split(".")[0], B.split(".")[0]
+
+def get_joinable_tables(table, join_clause_list):
+    """Returns a set of tables that can be joined with the given table."""
+    table_set = set()
+    for join_clause in sorted(join_clause_list):
+        t1, t2 = get_table_from_clause(join_clause)
+        if table == t1:
+            table_set.update([t2])
+        if table == t2:
+            table_set.update([t1])
+
+    return list(table_set)
+
+def get_accessed_tables(sql: str) -> list[str]:
+    parsed = parse_one(sql)
+    if not parsed:
+        return []
+
+    from_expr = parsed.args.get("from")
+    if not from_expr:
+        return []
+
+    tables = [table.name for table in from_expr.find_all(exp.Table)]
+
+    return list(set(tables))
+
+def map_tables_to_queries(query_blocks):
+    """Helper to map tables to their corresponding query blocks."""
+    table_to_queries = {}
+    for query in query_blocks:
+        for table in parse_one(query).find_all(exp.From):
+            table_name = table.name
+            table_to_queries.setdefault(table_name, []).append(query)
+    return table_to_queries
+
+def map_columns_to_tables(dtype_dict):
+    """Helper to map columns to the tables they appear in."""
+    column_to_tables = {}
+    for table_column in dtype_dict:
+        table_name, column_name = table_column.split(".", 1)
+        column_to_tables.setdefault(column_name, []).append(table_name)
+    return column_to_tables
+
 def is_id_column(args, col, join_key_list):
     if col == "*":
         return False
@@ -34,11 +307,10 @@ def replace_dot(input_str: str) -> str:
             
     return ''.join(result)
 
-def generate_select_clause_for_full_outer_view(args, relations=None, use_alias=True):
+def generate_select_clause_for_full_outer_view(table_info, relations=None, use_alias=True):
     select_columns = []
-    # <table name>___<column name>
-    for table in args.table_info.keys():
-        for column in args.table_info[table]:
+    for table in table_info.keys():
+        for column in table_info[table]:
             if relations is not None and table not in relations:
                 continue
             if use_alias:

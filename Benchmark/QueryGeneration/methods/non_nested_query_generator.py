@@ -374,7 +374,7 @@ class EGQueryGenerator(CBCQueryGenerator):
         if clause_type == "from":
             if len(query_info["relations"]) > 1:
                 from_clause = query_info[clause_type]
-                select_clause = generate_select_clause_for_full_outer_view(self.args, relations=query_info["relations"], use_alias=True)
+                select_clause = generate_select_clause_for_full_outer_view(self.table_info, relations=query_info["relations"], use_alias=True)
                 full_inner_join_sql = f"""
                     SELECT DISTINCT {select_clause}
                     {from_clause}
