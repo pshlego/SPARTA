@@ -1,0 +1,29 @@
+version: "3.8"
+services:
+  workspace:
+    image: ubuntu:latest
+    container_name: sparta_workspace
+    stdin_open: true
+    tty: true
+    network_mode: "host"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    volumes:
+      - ./:/root/sparta/
+  database:
+    image: postgres:15.1
+    container_name: sparta_database
+    stdin_open: true
+    tty: true
+    shm_size: '150gb'
+    ports:
+        - "5437:5432"
+    environment:
+        POSTGRES_USER: "postgres"
+        POSTGRES_PASSWORD: "postgres"
+    volumes:
+        - ./Benchmark/RFDatabaseConstruction/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+        - ./data/postgresql:/var/lib/postgresql/data

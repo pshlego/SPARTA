@@ -1,0 +1,9 @@
+corpus/
+data
+schema/
+translation_results/
+qa_dataset/
+results/
+*.log
+*.pyc
+.env

@@ -1,0 +1,7 @@
+source_data_dir_path: ./Benchmark/RFDatabaseConstruction/docker-entrypoint-initdb.d/corpus/source_tables
+grounding_data_dir_path: ./Benchmark/RFDatabaseConstruction/docker-entrypoint-initdb.d/corpus/grounding_tables
+join_file_path: ./Benchmark/RFDatabaseConstruction/sql_file/join.sql
+rename_file_path: ./Benchmark/RFDatabaseConstruction/sql_file/rename.sql
+aux_file_path: ./Benchmark/RFDatabaseConstruction/sql_file/aux.sql
+port: 5437
+db_name: reference_fact_db
