@@ -11,6 +11,51 @@ DATE_AGGS = ["COUNT", "MIN", "MAX"]
 KEY_AGGS = ["COUNT"]
 NUMERIC_AGGS = ["COUNT", "MIN", "MAX", "AVG", "SUM"]
 
+def get_columns_of_nested_predicate(predicate_sql: str):     
+    parsed = parse_one(predicate_sql)
+    outer_columns = set()
+    inner_columns = set()
+    for subq in parsed.find_all(exp.Subquery):
+        parent = subq.parent
+        if isinstance(parent, exp.In):
+            left_expr = parent.args.get("this")
+            for col in left_expr.find_all(exp.Column):
+                table_name = col.table
+                column_name = col.name
+                final_name = f"{table_name}.{column_name}" if table_name else column_name
+                outer_columns.add(final_name)
+        elif isinstance(parent, exp.Binary):
+            left_expr = parent.args.get("this")
+            right_expr = parent.args.get("expression")
+
+            if left_expr is subq:
+                other_side = right_expr
+            else:
+                other_side = left_expr
+
+            if other_side:
+                for col in other_side.find_all(exp.Column):
+                    table_name = col.table
+                    column_name = col.name
+                    final_name = f"{table_name}.{column_name}" if table_name else column_name
+                    outer_columns.add(final_name)
+        
+        for col in subq.find_all(exp.Column):
+            table_name = col.table
+            column_name = col.name
+            final_name = f"{table_name}.{column_name}" if table_name else column_name
+            inner_columns.add(final_name)
+
+    if not outer_columns:
+        subqueries = list(parsed.find_all(exp.Select))
+        for subquery in subqueries:
+            subquery_tables = {t.name for t in subquery.find_all(exp.Table)}
+            for col in subquery.find_all(exp.Column):
+                if col.table and col.table not in subquery_tables:
+                    outer_columns.add(f"{col.table}.{col.name}")
+                    
+    return list(outer_columns), list(inner_columns)
+
 def post_process_nested_predicate(sql):
     if sql.strip().lower().startswith("where"):
         return sql.strip()[len("WHERE"):].strip()
@@ -144,7 +189,6 @@ def generate_from_clause_for_full_outer_view(args, schema=None, relations=None, 
                 
                 if tab1 == table:
                     if tab2 in visited_tables:
-                        args.logger.warning("cyclic join")
                         from_clause += f" AND {join_clause}"
                     else:
                         from_clause += f" FULL OUTER JOIN {tab2} ON {join_clause}" if not is_inner_join else f" INNER JOIN {tab2} ON {join_clause}"
@@ -154,7 +198,6 @@ def generate_from_clause_for_full_outer_view(args, schema=None, relations=None, 
     
                 if tab2 == table:
                     if tab1 in visited_tables:
-                        args.logger.warning("cyclic join")
                         from_clause += f" AND {join_clause}"
                     else:
                         from_clause += f" FULL OUTER JOIN {tab1} ON {join_clause}" if not is_inner_join else f" INNER JOIN {tab1} ON {join_clause}"
@@ -164,7 +207,6 @@ def generate_from_clause_for_full_outer_view(args, schema=None, relations=None, 
 
         if not is_updated:
             # Not connected join
-            args.logger.error("Not supported error: Cartesian Product on FROM clause")
             assert False
     
     return from_clause

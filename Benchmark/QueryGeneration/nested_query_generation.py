@@ -50,6 +50,9 @@ def run_generator(data_manager, schema, column_info, args, rng, table_info, logg
         
     if args.approach_name == "oneshotk":
         llm_query_generator = OneShotKNestedQueryGenerator(args, data_manager, rng, all_table_set, table_info, dtype_dict, join_key_list, join_clause_list, inner_query_blocks_wo_agg, inner_query_blocks_w_agg, logger)
+    elif args.approach_name == "postorder":
+        llm_query_generator = PostOrderNestedQueryGenerator(args, data_manager, rng, all_table_set, table_info, dtype_dict, join_key_list, join_clause_list, inner_query_blocks_wo_agg, inner_query_blocks_w_agg, logger)
+    
     
     while num_success < args.num_queries:
         num_iter += 1

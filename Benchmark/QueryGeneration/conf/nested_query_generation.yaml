@@ -18,7 +18,7 @@ HASH_CODES:
 NOTES:
 CATEGORIES:
 FOREIGN_KEYS:
-approach_name: oneshotk
+approach_name: postorder
 # approach_name options: oneshotk (one-shot-k), postorder (post-order)
 is_prov: false
 
