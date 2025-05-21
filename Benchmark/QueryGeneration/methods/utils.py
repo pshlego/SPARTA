@@ -6,6 +6,49 @@ from typing import Any, List
 from sqlglot import parse_one, exp
 from sqlglot.optimizer.normalize import normalize
 
+TEXTUAL_AGGS = ["COUNT"]
+DATE_AGGS = ["COUNT", "MIN", "MAX"]
+KEY_AGGS = ["COUNT"]
+NUMERIC_AGGS = ["COUNT", "MIN", "MAX", "AVG", "SUM"]
+
+def is_id_column(args, col, join_key_list):
+    if col == "*":
+        return False
+    return col in join_key_list or "id" in col.split(".")[-1].lower() or col in args.IDS
+
+def is_hashcode_column(args, col):
+    return col in args.HASH_CODES
+
+def replace_dot(input_str: str) -> str:
+    result = []
+    length = len(input_str)
+
+    for i, ch in enumerate(input_str):
+        if ch == '.':
+            if i > 0 and i < length - 1 and input_str[i-1].isdigit() and input_str[i+1].isdigit():
+                result.append('.')
+            else:
+                result.append('__')
+        else:
+            result.append(ch)
+            
+    return ''.join(result)
+
+def generate_select_clause_for_full_outer_view(args, relations=None, use_alias=True):
+    select_columns = []
+    # <table name>___<column name>
+    for table in args.table_info.keys():
+        for column in args.table_info[table]:
+            if relations is not None and table not in relations:
+                continue
+            if use_alias:
+                select_columns.append(f"{table}.{column} AS {table}__{column}")
+            else:
+                select_columns.append(f"{column}")
+
+    select_clause = ", ".join(select_columns)
+    return select_clause
+
 def transform_sql(query: str, column_types: dict) -> str:
     """
     Transform the SQL query to match column data types.
