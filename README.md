@@ -147,7 +147,18 @@ You can use the following commands:
     python /root/sparta/Benchmark/RFDatabaseConstruction/construct.py
     ```
 
-### 
+### Generate Leaf Nodes
+    ```bash
+    export PYTHONPATH=/root/sparta/Benchmark/QueryGeneration
+    export PYTHONPATH=/root/sparta/Benchmark/QueryGeneration/methods
+    
+    # one-shot non-nested query generator
+    python /root/sparta/Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=oneshot
+    # clause-by-clause non-nested query generator
+    python /root/sparta/Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=cbc
+    # execution-guided non-nested query generator
+    python /root/sparta/Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=eg
+    ```
 
 <!-- <p align="right">(<a href="#readme-top">back to top</a>)</p> -->
 

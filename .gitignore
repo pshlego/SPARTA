@@ -1,5 +1,6 @@
 corpus/
 data
+outputs/
 schema/
 translation_results/
 qa_dataset/
