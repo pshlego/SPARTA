@@ -6,6 +6,74 @@ from typing import Any, List
 from sqlglot import parse_one, exp
 from sqlglot.optimizer.normalize import normalize
 
+def transform_sql(query: str, column_types: dict) -> str:
+    """
+    Transform the SQL query to match column data types.
+    """
+    tree = parse_one(query.replace('-', "123456789").replace("lb", "135792468"))
+    
+    def _replace_literals(expression):
+        if isinstance(expression, exp.Condition):  # Conditions like WHERE clauses
+            if isinstance(expression, (exp.EQ, exp.GT, exp.LT, exp.GTE, exp.LTE)):
+                left, right = expression.args.get("this"), expression.args.get("expression")
+                if isinstance(left, exp.Column) and isinstance(right, exp.Literal):
+                    col_name = f"{left.table}.{left.name}" if left.table else left.name
+                    if col_name.replace('__', '.') in column_types:
+                        dtype = column_types[col_name.replace('__', '.')]
+                        new_value = cast_value_to_dtype(right.this, dtype)
+                        expression.set("expression", new_value)
+        
+        for e in expression.args.values():
+            if isinstance(e, list):
+                for sub in e:
+                    _replace_literals(sub)
+            elif isinstance(e, exp.Expression):
+                _replace_literals(e)
+    
+    _replace_literals(tree)
+    return tree.sql().replace('123456789', '-').replace("135792468", "lb")
+
+
+def cast_value_to_dtype(value, dtype):
+    """
+    Convert the given value to match the corresponding SQL data type.
+    """
+    if dtype.lower() in ("int", "integer", "bigint", "smallint"):
+        try:
+            return exp.Literal.number(str(int(value)))  # Ensure integer type
+        except:
+            return exp.Literal.number(str(float(value))) 
+    elif dtype.lower() in ("float", "double", "real", "decimal"): 
+        return exp.Literal.number(str(float(value)))  # Ensure floating point type
+    elif dtype.lower() in ("bool", "boolean"):
+        return exp.Literal.boolean("TRUE" if value.lower() in ("1", "true", "t", "yes", "y") else "FALSE")
+    elif dtype.lower() in ("text", "string", "varchar", "char", "str"):
+        return exp.Literal.string(value)  # Ensure string format with quotes
+    return exp.Literal.string(value)  # Default case: return as string
+
+def is_categorical_column(args, col):
+    return col in args.CATEGORIES
+
+def select_clauses(args, rng):
+    prob_where = args.hyperparams["prob_where"]
+    prob_group = args.hyperparams["prob_group"]
+    prob_having = args.hyperparams["prob_having"]
+    prob_order = args.hyperparams["prob_order"]
+    prob_limit = args.hyperparams["prob_limit"]
+    sql_type = {
+        "where": bool(rng.choice([0, 1], p=[1 - prob_where, prob_where])),
+        "group": bool(rng.choice([0, 1], p=[1 - prob_group, prob_group])),
+        "having": bool(rng.choice([0, 1], p=[1 - prob_having, prob_having])),
+        "order": bool(rng.choice([0, 1], p=[1 - prob_order, prob_order])),
+        "limit": bool(rng.choice([0, 1], p=[1 - prob_limit, prob_limit])),
+    }
+    if not sql_type["group"]:
+        sql_type["having"] = False
+    if not sql_type["order"]:
+        sql_type["limit"] = False
+
+    return sql_type
+
 def set_col_info(col_info):
     IDS = col_info["ids"]
     HASH_CODES = col_info["hash_codes"]

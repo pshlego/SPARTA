@@ -39,6 +39,8 @@ def run_generator(data_manager, schema, column_info, args, rng, table_info, logg
     
     if args.approach_name == "oneshot":
         llm_query_generator = OneShotQueryGenerator(args, data_manager, rng, all_table_set)
+    elif args.approach_name == "cbc":
+        llm_query_generator = CBCQueryGenerator(args, data_manager, rng, all_table_set, table_info, column_info, logger)
     
     while num_success < args.num_queries:
         num_iter += 1

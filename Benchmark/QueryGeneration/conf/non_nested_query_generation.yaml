@@ -10,7 +10,7 @@ output_path: /root/sparta/Benchmark/QueryGeneration/results/debug.out
 log_path: /root/sparta/Benchmark/QueryGeneration/results/debug.log
 dtype_path: /root/sparta/Benchmark/RFDatabaseConstruction/dtype_dict.json
 schema_path: /root/sparta/Benchmark/RFDatabaseConstruction/schema.json
-approach_name: oneshot
+approach_name: cbc
 table_info:
 IDS:
 HASH_CODES:
