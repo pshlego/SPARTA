@@ -190,7 +190,7 @@ class CBCQueryGenerator(OneShotQueryGenerator):
             table = self.rng.choice(candidate_root_tables)
         else:
             table = self.rng.choice(avaliable_tables)
-        return table
+        return str(table)
 
     def update_generated_clause_info_dict(self, generated_clause_info_dict, clause_type, revised_clause, relations=None):
         generated_clause_info_dict[clause_type] = revised_clause
