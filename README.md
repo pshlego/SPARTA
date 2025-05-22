@@ -210,7 +210,9 @@ You can use the following commands:
 
 ### Question Verbalization
     ```bash
+    python /root/sparta/Benchmark/QuestionVerbalisation/assemble.py
 
+    python 
     ```
 
 ### Eval Table-Text QA Baseline
