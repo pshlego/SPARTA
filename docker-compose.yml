@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   workspace:
-    image: ubuntu:latest
+    image: anonymous433/sparta_workspace
     container_name: sparta_workspace
     stdin_open: true
     tty: true
