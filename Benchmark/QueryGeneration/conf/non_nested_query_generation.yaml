@@ -1,6 +1,6 @@
 db: reference_fact_db
 port: 5437
-llm_addr: http://141.223.197.39:30000/generate
+llm_addr: http://localhost:30000/generate
 num_queries: 250
 is_bulk: false
 num_queries_per_iter: 1

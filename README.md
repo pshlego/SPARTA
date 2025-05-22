@@ -54,36 +54,89 @@
 
 
 <!-- ABOUT THE PROJECT -->
-<!-- ## About SPARTA
+## About SPARTA
 
-We introduce SPARTA, our novel table-text retrieval model designed to enhance the capabilities of open-domain question answering systems by addressing the limitations of both early and late fusion methods. Here are the key features of HELIOS:
-
-- Combining early and late fusion techniques, it bridges the gap between static pre-alignments and dynamic retrieval strategies, ensuring contextually relevant results for more complex queries.
-- Utilizing edge-based bipartite subgraph retrieval, HELIOS materializes finer-grained relationships between table segments and text passages, reducing the inclusion of irrelevant information while maintaining crucial query-dependent links.
-- Employing a query-relevant node expansion mechanism, it dynamically identifies and retrieves the most promising nodes for expansion, minimizing the risk of missing vital contexts.
-- Integrating a star-based LLM refinement step, it prevents hallucinations by performing logical inference at the star graph level, enabling advanced reasoning tasks such as column-wise aggregation and multi-hop reasoning.
-
+SPARTA is a large-scale Table–Text QA benchmark designed to rigorously evaluate deep, multi-hop reasoning across heterogeneous data sources. SPARTA provides a thousand high-fidelity instances featuring complex operations such as aggregation, grouping, and tree-structured multi-hop inference over both structured tables and unstructured texts. It enables comprehensive testing of QA models on tasks that closely mirror real-world analytical queries, which are underrepresented in prior datasets. In contrast to existing benchmarks where multi-hop questions are typically limited to simplistic linear chains, SPARTA includes a diverse array of reasoning patterns such as multi-branch paths, longer inference chains, and uni-modality hops (e.g., multiple steps within either text or table alone). These enriched reasoning structures are critical for assessing model performance on complex, real-world inference tasks.
 
 <p align = "center">
-<img src="images/system_overview.png" alt="drawing" width="800"/>
-</p> -->
+<img src="images/sparta_example.png" alt="drawing" width="800"/>
+</p>
+
+## Task Details
+
+- **Task Type**: Table-Text QA
+
+- **Question Type**
+
+    SPARTA supports a broad spectrum of reasoning types and SQL operations that reflect real-world analytical tasks:
+
+    - **SQL Operators**:
+        - `WHERE` (100%)
+        - `AGGREGATION` (50.0%)
+        - `GROUP BY` (12.6%)
+        - `HAVING` (3.4%)
+        - `ORDER BY` (6.2%)
+        - `LIMIT` (4.4%)
+
+    - **Query Shapes**:
+        - **Non-nested** (50%)
+        - **Star-shaped joins** of size 1–3 (30%)
+        - **Chain-structured joins** of size 2–3 (20%)
+
+    - **Reasoning Modalities**:
+        - **Cross-modal multi-hop**: combining evidence from both table and text
+        - **Uni-modal multi-hop**: multi-hop reasoning confined within either table or text
+
+    This coverage allows SPARTA to evaluate not only **deep logical inference** and **advanced SQL operations**, but also the model's ability to navigate both **cross-modal** and **uni-modal** reasoning paths—unlike many existing benchmarks which support only shallow or cross-modal chains.
+
+- **Answer Format**
+
+    The answer is represented as a **list of values**, which may include:
+    - **Text spans** (e.g., `"Jalen Rose"`, `"Celtics"`)
+    - **Numeric values** (e.g., `4`, `10.23`)
+    - **Date values** (eg., `"2014-12-27"`)
+    
+    The list may contain:
+    - A **single answer** (e.g., `["Jalen Rose"]`, `[24.4]`)
+    - **Multiple answers** (e.g., `["Celtics", "Trail Blazers"]` or `[4, 3, 10]`), typically in the case of aggregation, grouping, or set-returning queries
+    
+    All answers are extracted directly from the **SQL execution result**, ensuring consistency with the underlying data.
+
+- **Evaluation Metrics**: 
+    - *Exact Match (EM)*  
+    - *F1 Score*  
+    - *Precision*
+    - *Recall*
+
+## Dataset Structure
+
+Each sample in the dataset is represented as a JSON object with the following fields:
+```json
+{
+    "question_id": 624,
+    "question": "Which team scored the highest points in the arena with the highest capacity among the teams that were founded before 1970 and have an arena capacity of more than 18000, and also scored more than 160 points, and is either the Bulls or the Lakers?",
+    "table": [
+        "nba_team_information",
+        "nba_team_game_stats"
+    ],
+    "sql_query": "SELECT team_name FROM nba_team_game_stats WHERE team_points >= (SELECT MAX(team_points) AS max_points_scored FROM nba_team_game_stats WHERE team_name IN (SELECT team_name FROM nba_team_information WHERE arena_capacity >= (SELECT MAX(arena_capacity) AS max_arena_capacity FROM nba_team_information WHERE arena_capacity > 18000 AND founded_year < 1970))) AND team_points > 160 AND team_name IN ('Bulls', 'Lakers')\n",
+    "answer": [
+        "Bulls"
+    ]
+},
+```
+- `question`: A natural language question.
+- `table`: A list of gold tables used to answer the question.
+- `sql_query`: The corresponding SQL query that retrieves the answer from the tables.
+- `answer`: The answer(s) to the question.
 
 
-<!-- 
-### Built With
+## Benchmark Statistics
 
-* [![Next][Next.js]][Next-url]
-* [![React][React.js]][React-url]
-* [![Vue][Vue.js]][Vue-url]
-* [![Angular][Angular.io]][Angular-url]
-* [![Svelte][Svelte.dev]][Svelte-url]
-* [![Laravel][Laravel.com]][Laravel-url]
-* [![Bootstrap][Bootstrap.com]][Bootstrap-url]
-* [![JQuery][JQuery.com]][JQuery-url]
+| # Questions| Avg. Table Rows | Avg. Table Columns |
+|------------|-----------------|--------------------|
+| 1,000      | 3280.5          | 12.2               |
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p> -->
-
-<!-- GETTING STARTED -->
 
 ## Getting Started
 
@@ -114,7 +167,7 @@ The files are available in the "Files" section of the anonymized project at the 
 
 ### Extracting and Organizing Files
 
-#### 1. `corpus.zip`
+1. `corpus.zip`
 
 Unzip the file and move the extracted `corpus` folder to the following directory:  
 `SPARTA/Benchmark/RFDatabaseConstruction/docker-entrypoint-initdb.d/`
@@ -124,6 +177,7 @@ Unzip the file and move the extracted `corpus` folder to the following directory
     mv corpus SPARTA/Benchmark/RFDatabaseConstruction/docker-entrypoint-initdb.d/corpus
     ```
 2. `embedding_cache.zip`
+
 Unzip the file and move the extracted embedding_cache folder to the following directory:
 `SPARTA/Baseline/ODYSSEY/`
 
@@ -135,6 +189,7 @@ You can use the following commands:
     ```
 
 3. `Dataset.zip` and `Workload.zip`
+
 Unzip both files and move the extracted folders to:
 `SPARTA/Benchmark/`
 
@@ -169,25 +224,24 @@ You can use the following commands:
     ```bash
     cd SPARTA
     docker compose up -d
-    docker exec -it sparta_workspace bash
-    ```
-
-### Activate Conda Env
-    ```bash
-    conda activate sparta
     ```
 
 ### Reference Fact Database Construction
     ```bash
-    cd SPARTA
     python Benchmark/RFDatabaseConstruction/construct.py
+    ```
+
+### Activate Conda Env
+    ```bash
+    docker exec -it sparta_workspace bash
+    conda activate sparta
     ```
 
 ### Query Generation
 
 1. Leaf Nodes Generation
     ```bash
-    cd SPARTA
+    cd sparta
     export PYTHONPATH=Benchmark/QueryGeneration
     export PYTHONPATH=Benchmark/QueryGeneration/methods
     # one-shot
@@ -210,15 +264,26 @@ You can use the following commands:
 
 ### Question Verbalization
     ```bash
-    python /root/sparta/Benchmark/QuestionVerbalisation/assemble.py
-
-    python 
+    python Benchmark/QuestionVerbalisation/assemble.py
+    python Benchmark/QuestionVerbalisation/translate.py
     ```
 
-### Eval Table-Text QA Baseline
+### Table-Text Question Answering
     ```bash
-    sh /root/sparta/Baseline/ODYSSEY/script/preprocess.sh
-    python /root/sparta/Baseline/ODYSSEY/inference.py
+    sh Baseline/ODYSSEY/script/preprocess.sh
+    python Baseline/ODYSSEY/inference.py
     ```
 
-<!-- CONTACT -->
+## Baseline Models
+
+| Model                    | EM       | F1       | Precision (P) | Recall (R) |
+| ------------------------ | -------- | -------- | ------------- | ---------- |
+| ODYSSEY w/ GPT-4.1       | 12.7     | **20.5** | **30.5**      | **20.9**   |
+| ODYSSEY w/ GPT-3.5-turbo | 8.8      | 15.5     | 27.2          | 16.2       |
+| HProPro w/ GPT-4.1       | **18.5** | 20.1     | 21.1          | 20.6       |
+| HProPro w/ GPT-3.5-turbo | 13.5     | 16.3     | 19.0          | 17.1       |
+
+
+## Languages
+
+The dataset is in English language.

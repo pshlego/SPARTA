@@ -4,7 +4,7 @@ examples_path: /root/sparta/Benchmark/QuestionVerbalisation/results/icl-top-spid
 port: 5437
 db_name: reference_fact_db
 
-llm_addr: http://141.223.197.39:30000/generate
+llm_addr: http://localhost:30000/generate
 temperature: 0.5
 top_p: 0.9
 max_new_tokens: 128
