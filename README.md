@@ -98,18 +98,53 @@ Please refer to the instructions below.
 You must be able to download our docker image from the docker cloud.
 Please refer to [Docker Docs](https://docs.docker.com) to download docker.
 
-### Downloading the Corpus
+### Downloading Anonymized Files
 
-Download `corpus.zip` from the **sparta_anonymous** project hosted on OSF (Open Science Framework). You can find the file in the "Files" section of the following anonymized project [LINK](https://osf.io/3abrs/?view_only=7829111feb524fd597c3cada22f8e4ad).
+Please download the following files from the anonymized **sparta_anonymous** project hosted on the Open Science Framework (OSF):
 
-After downloading the file, unzip it and move the extracted `corpus` folder to the following directory:
-SPARTA/Benchmark/RFDatabaseConstruction/docker-entrypoint-initdb.d/
+- `corpus.zip`
+- `Dataset.zip`
+- `Workload.zip`
+- `embedding_cache.zip`
+
+The files are available in the "Files" section of the anonymized project at the following link:  
+[https://osf.io/3abrs/?view_only=7829111feb524fd597c3cada22f8e4ad](https://osf.io/3abrs/?view_only=7829111feb524fd597c3cada22f8e4ad)
+
+---
+
+### Extracting and Organizing Files
+
+#### 1. `corpus.zip`
+
+Unzip the file and move the extracted `corpus` folder to the following directory:  
+`SPARTA/Benchmark/RFDatabaseConstruction/docker-entrypoint-initdb.d/`
+
+    ```bash
+    unzip corpus.zip
+    mv corpus SPARTA/Benchmark/RFDatabaseConstruction/docker-entrypoint-initdb.d/corpus
+    ```
+2. `embedding_cache.zip`
+Unzip the file and move the extracted embedding_cache folder to the following directory:
+`SPARTA/Baseline/ODYSSEY/`
 
 You can use the following commands:
 
     ```bash
-    unzip corpus.zip
-    mv corpus ./SPARTA/Benchmark/RFDatabaseConstruction/docker-entrypoint-initdb.d/
+    unzip embedding_cache.zip
+    mv embedding_cache SPARTA/Baseline/ODYSSEY/embedding_cache
+    ```
+
+3. `Dataset.zip` and `Workload.zip`
+Unzip both files and move the extracted folders to:
+`SPARTA/Benchmark/`
+
+You can use the following commands:
+
+    ```bash
+    unzip Dataset.zip
+    unzip Workload.zip
+    mv Dataset SPARTA/Benchmark/Dataset
+    mv Workload SPARTA/Benchmark/Workload
     ```
 
 ### Download & Run the Large Langiage Model
@@ -144,158 +179,44 @@ You can use the following commands:
 
 ### Reference Fact Database Construction
     ```bash
-    python /root/sparta/Benchmark/RFDatabaseConstruction/construct.py
+    cd SPARTA
+    python Benchmark/RFDatabaseConstruction/construct.py
     ```
 
-### Generate Leaf Nodes
+### Query Generation
+
+1. Leaf Nodes Generation
     ```bash
-    export PYTHONPATH=/root/sparta/Benchmark/QueryGeneration
-    export PYTHONPATH=/root/sparta/Benchmark/QueryGeneration/methods
-    
-    # one-shot non-nested query generator
-    python /root/sparta/Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=oneshot
-    # clause-by-clause non-nested query generator
-    python /root/sparta/Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=cbc
-    # execution-guided non-nested query generator
-    python /root/sparta/Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=eg
+    cd SPARTA
+    export PYTHONPATH=Benchmark/QueryGeneration
+    export PYTHONPATH=Benchmark/QueryGeneration/methods
+    # one-shot
+    python Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=oneshot
+    # clause-by-clause
+    python Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=cbc
+    # execution-guided
+    python Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=eg
     ```
 
-<!-- <p align="right">(<a href="#readme-top">back to top</a>)</p> -->
-
-<!-- ## Download Model Checkpoints -->
-<!-- edge retriever -->
-<!-- edge reranker -->
-<!-- table segment retriever -->
-<!-- passage retriever -->
-<!-- node scorer -->
-<!-- LLM -->
-
-<!-- 
-## Earl Fusion -->
-
-<!-- 
-
-The whole reproduction process can be easily done by typing a single line
-
-```bash
-./runAll.sh
-```
-
-The anticipated runtime of the whole process is over 4 full days, so we recomment you to run the process using `tmux`!
-
-For detailed explanation or for a more fine-grained run, jump to <a href="#quick-overview">Quick Overview</a> -->
-
-## Build Index
-
-1. Create edge index
+2. Non-leaf Nodes Generation
     ```bash
-    sh Algorithms/Ours/scripts/build_edge_index.sh
-    ```
-2. Create table segment index
-    ```bash
-    sh Algorithms/Ours/scripts/build_table_segment_index.sh
-    ```
-3. Create passage index
-    ```bash
-    sh Algorithms/Ours/scripts/build_passage_index.sh
+    # one-shot-k
+    python Benchmark/QueryGeneration/nested_query_generation.py approach_name=oneshotk
+    # post-order w/o provenance
+    python Benchmark/QueryGeneration/nested_query_generation.py approach_name=postorder is_prov=False
+    # post-order w/ provenance
+    python Benchmark/QueryGeneration/nested_query_generation.py approach_name=postorder is_prov=True
     ```
 
-## Run Edge-based Bipartite Subgraph Retrieval
-0. If tmux is not installed, run the following command
+### Question Verbalization
     ```bash
-    apt-get install tmux
-    ```
-1. Load edge retriever
-    ```bash
-    tmux new -s edge_retriever
-    conda activate fm
-    cd HELIOS
-    sh Algorithms/Ours/scripts/load_edge_retriever.sh
-    ```
-2. Load edge reranker
-    ```bash
-    tmux new -s edge_reranker
-    conda activate fm
-    cd HELIOS
-    sh Algorithms/Ours/scripts/load_edge_reranker.sh
-    ```
-3. Run bipartite subgraph retrieval
-    ```bash
-    sh Algorithms/Ours/scripts/run_edge_based_bipartite_subgraph_retrieval.sh
+
     ```
 
-## Run Query-relevant Node Expansion
-0. Kill edge retriever session
+### Eval Table-Text QA Baseline
     ```bash
-    tmux kill-session -t edge_retriever
-    ```
-1. Load seed node scorer
-    ```bash
-    tmux new -s node_scorer
-    conda activate fm
-    cd HELIOS
-    sh Algorithms/Ours/scripts/load_seed_node_scorer.sh
-    ```
-2. Load table segment retriever
-    ```bash
-    tmux new -s table_segment_retriever
-    conda activate fm
-    cd HELIOS
-    sh Algorithms/Ours/scripts/load_table_segment_retriever.sh
-    ```
-3. Load passage retriever
-    ```bash
-    tmux new -s passage_retriever
-    conda activate fm
-    cd HELIOS
-    sh Algorithms/Ours/scripts/load_passage_retriever.sh
-    ```
-4. Run query-relevant node expansion
-    ```bash
-    sh Algorithms/Ours/scripts/run_query_relevant_node_expansion.sh
+    sh /root/sparta/Baseline/ODYSSEY/script/preprocess.sh
+    python /root/sparta/Baseline/ODYSSEY/inference.py
     ```
 
-## Run Star-based LLM Refinement
-0. Kill edge retriever session
-    ```bash
-    tmux kill-session -t edge_reranker
-    tmux kill-session -t node_scorer
-    tmux kill-session -t table_segment_retriever
-    tmux kill-session -t passage_retriever
-    ```
-1. Load large language model
-    ```bash
-    tmux new -s llm
-    conda activate fm
-    cd HELIOS
-    sh Algorithms/Ours/scripts/load_llm.sh
-    ```
-2. Run star-based llm refinement
-    ```bash
-    sh Algorithms/Ours/scripts/run_star_based_llm_refinement.sh
-    ```
-
-## Evaluate Retrieval Accuracy
-0. Evaluate AnswerRecall@K
-    ```bash
-    sh Algorithms/Ours/scripts/eval_answer_recall.sh
-    ```
-1. Evaluate nDCG@K
-    ```bash
-    sh Algorithms/Ours/scripts/eval_ndcg.sh
-    ```
-2. Evaluate HITS@4K
-    ```bash
-    sh Algorithms/Ours/scripts/eval_hits.sh
-    ```
-
-## Evaluate Reading Accuracy
-0. Convert retrieval results into reader input
-    ```bash
-    sh Algorithms/Ours/scripts/get_reader_input.sh
-    ```
-1. Evaluate Exact Match & F1 Score
-    ```bash
-    sh Algorithms/Ours/scripts/eval_reading_accuracy.sh
-    ```
 <!-- CONTACT -->

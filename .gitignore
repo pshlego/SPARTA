@@ -5,6 +5,10 @@ schema/
 translation_results/
 qa_dataset/
 results/
+embedding_cache/
+Dataset/
+Workload/
 *.log
 *.pyc
 .env
+
