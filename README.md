@@ -172,21 +172,20 @@ The files are available in the "Files" section of the anonymized project at the 
 Unzip the file and move the extracted `corpus` folder to the following directory:  
 `SPARTA/Benchmark/RFDatabaseConstruction/docker-entrypoint-initdb.d/`
 
-    ```bash
-    unzip corpus.zip
-    mv corpus SPARTA/Benchmark/RFDatabaseConstruction/docker-entrypoint-initdb.d/corpus
-    ```
+```bash
+unzip corpus.zip
+mv corpus SPARTA/Benchmark/RFDatabaseConstruction/docker-entrypoint-initdb.d/corpus
+```
 2. `embedding_cache.zip`
 
 Unzip the file and move the extracted embedding_cache folder to the following directory:
 `SPARTA/Baseline/ODYSSEY/`
 
 You can use the following commands:
-
-    ```bash
-    unzip embedding_cache.zip
-    mv embedding_cache SPARTA/Baseline/ODYSSEY/embedding_cache
-    ```
+```bash
+unzip embedding_cache.zip
+mv embedding_cache SPARTA/Baseline/ODYSSEY/embedding_cache
+```
 
 3. `Dataset.zip` and `Workload.zip`
 
@@ -194,85 +193,83 @@ Unzip both files and move the extracted folders to:
 `SPARTA/Benchmark/`
 
 You can use the following commands:
-
-    ```bash
-    unzip Dataset.zip
-    unzip Workload.zip
-    mv Dataset SPARTA/Benchmark/Dataset
-    mv Workload SPARTA/Benchmark/Workload
-    ```
+```bash
+unzip Dataset.zip
+unzip Workload.zip
+mv Dataset SPARTA/Benchmark/Dataset
+mv Workload SPARTA/Benchmark/Workload
+```
 
 ### Download & Run the Large Langiage Model
 
 1. Download the large language model
-    ```bash
-    HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download meta-llama/Llama-3.1-70B-Instruct --local-dir-use-symlinks False --local-dir /mnt/Meta-Llama-3.1-70B-Instruct --exclude *.pth
-    ```
+```bash
+HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download meta-llama/Llama-3.1-70B-Instruct --local-dir-use-symlinks False --local-dir /mnt/Meta-Llama-3.1-70B-Instruct --exclude *.pth
+```
 
 2. Run the large language model
-    ```bash
-    docker run --gpus all \
-        -p 30000:30000 \
-        --ipc=host \
-        --mount type=bind,source=/mnt,target=/root \
-        lmsysorg/sglang:latest \
-        python3 -m sglang.launch_server --model-path /root/Llama-3.1-70B-Instruct --host 0.0.0.0 --port 30000 --tp 4
-    ```
+```bash
+docker run --gpus all \
+    -p 30000:30000 \
+    --ipc=host \
+    --mount type=bind,source=/mnt,target=/root \
+    lmsysorg/sglang:latest \
+    python3 -m sglang.launch_server --model-path /root/Llama-3.1-70B-Instruct --host 0.0.0.0 --port 30000 --tp 4
+```
 
 ### Setup Docker Containers
-
-    ```bash
-    cd SPARTA
-    docker compose up -d
-    ```
+```bash
+cd SPARTA
+docker compose up -d
+```
 
 ### Reference Fact Database Construction
-    ```bash
-    python Benchmark/RFDatabaseConstruction/construct.py
-    ```
+```bash
+python Benchmark/RFDatabaseConstruction/construct.py
+```
 
 ### Activate Conda Env
-    ```bash
-    docker exec -it sparta_workspace bash
-    conda activate sparta
-    ```
+```bash
+docker exec -it sparta_workspace bash
+conda activate sparta
+```
 
 ### Query Generation
 
 1. Leaf Nodes Generation
-    ```bash
-    cd sparta
-    export PYTHONPATH=Benchmark/QueryGeneration
-    export PYTHONPATH=Benchmark/QueryGeneration/methods
-    # one-shot
-    python Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=oneshot
-    # clause-by-clause
-    python Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=cbc
-    # execution-guided
-    python Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=eg
-    ```
+```bash
+cd sparta
+export PYTHONPATH=Benchmark/QueryGeneration
+export PYTHONPATH=Benchmark/QueryGeneration/methods
+# one-shot
+python Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=oneshot
+# clause-by-clause
+python Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=cbc
+# execution-guided
+python Benchmark/QueryGeneration/non_nested_query_generation.py approach_name=eg
+```
 
 2. Non-leaf Nodes Generation
-    ```bash
-    # one-shot-k
-    python Benchmark/QueryGeneration/nested_query_generation.py approach_name=oneshotk
-    # post-order w/o provenance
-    python Benchmark/QueryGeneration/nested_query_generation.py approach_name=postorder is_prov=False
-    # post-order w/ provenance
-    python Benchmark/QueryGeneration/nested_query_generation.py approach_name=postorder is_prov=True
-    ```
+```bash
+# one-shot-k
+python Benchmark/QueryGeneration/nested_query_generation.py approach_name=oneshotk
+# post-order w/o provenance
+python Benchmark/QueryGeneration/nested_query_generation.py approach_name=postorder is_prov=False
+# post-order w/ provenance
+python Benchmark/QueryGeneration/nested_query_generation.py approach_name=postorder is_prov=True
+```
 
 ### Question Verbalization
-    ```bash
-    python Benchmark/QuestionVerbalisation/assemble.py
-    python Benchmark/QuestionVerbalisation/translate.py
-    ```
+```bash
+python Benchmark/QuestionVerbalisation/assemble.py
+python Benchmark/QuestionVerbalisation/translate.py
+```
 
 ### Table-Text Question Answering
-    ```bash
-    sh Baseline/ODYSSEY/script/preprocess.sh
-    python Baseline/ODYSSEY/inference.py
-    ```
+```bash
+sh Baseline/ODYSSEY/script/preprocess.sh
+python Baseline/ODYSSEY/inference.py
+```
 
 ## Baseline Models
 
