@@ -1,7 +1,7 @@
 # SPARTA: Scalable and Principled Benchmark of Tree-Structured Multi-hop QA over Text and Tables
 
 <p align="center">
-    <img src="images/sparta_logo.png" alt="SPARTA" width="500">
+    <img src="images/sparta_logo.png" alt="SPARTA" width="800">
 </p>
 
 <p align="center">
