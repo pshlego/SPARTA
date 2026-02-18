@@ -1,0 +1,5 @@
+# Base configuration for Sparta benchmark
+join_file_path: /root/TextDBQA/src/benchmark/sparta/RFDatabaseConstruction/join.sql
+rename_file_path: /root/TextDBQA/src/benchmark/sparta/RFDatabaseConstruction/rename.sql
+aux_file_path: /root/TextDBQA/src/benchmark/sparta/RFDatabaseConstruction/aux.sql
+port: 5440

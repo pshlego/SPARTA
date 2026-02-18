@@ -1,0 +1,14 @@
+dataset_train: /root/TextDBQA/data/sparta/train_spider.json
+dataset_test: /root/TextDBQA/data/sparta/results/w_agg.out
+output_dir: /root/TextDBQA/data/sparta/verbalisation_results
+
+dataset: spider
+method: icl-top
+num_examples: 4
+model: GCN
+limit: False
+word_embedding_dim: 100
+n_clusters: 9
+hidden_dim: 24
+output_dim: 2
+LEN: 10

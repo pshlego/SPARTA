@@ -1,0 +1,36 @@
+db: nba
+port: 5440
+llm_addr: http://localhost:30000/generate
+num_queries: 10
+is_bulk: false
+num_queries_per_iter: 1
+debug: true
+seed: 1234
+output_path: data/sparta/iclr_results/nba/non_nested_wo_agg.out
+previous_generated_queries_path: /root/TextDBQA/data/sparta/workload/nba.out
+log_path: data/sparta/results/debug.log
+dtype_path: data/sparta/docker-entrypoint-initdb.d/nba/dtype_dict.json
+schema_path: data/sparta/docker-entrypoint-initdb.d/nba/schema.json
+domain: movie
+table_info:
+IDS:
+HASH_CODES:
+NOTES:
+CATEGORIES:
+FOREIGN_KEYS:
+INVALID_IDS: 
+approach_name: eg
+
+hyperparams:
+  prob_where: 1.0
+  prob_group: 0.2 
+  prob_having: 0.25
+  prob_order: 0.1
+  prob_limit: 0.5
+  is_agg: false
+  max_clause_gen_count: 10
+
+llm_hyperparams:
+  temperature: 0.5
+  top_p: 0.9
+  max_tokens: 96

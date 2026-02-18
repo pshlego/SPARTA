@@ -1,0 +1,14 @@
+name: ottqa
+folder: ottqa
+workload_file_path: ${.raw_dataset_path}
+
+raw_dataset_path: ${root_mount_path}/OTT-QA/released_data/dev.traced.json
+raw_gold_table_dir_path: ${root_mount_path}/OTT-QA/data/traindev_tables_tok/
+raw_gold_passage_dir_path: ${root_mount_path}/OTT-QA/data/traindev_request_tok/
+
+raw_source_table_file_path: ${root_mount_path}/OTT-QA/data/all_plain_tables.json
+raw_source_passage_file_path: ${root_mount_path}/OTT-QA/data/all_passages.json
+context_mode: global # query_specific, global
+defaults:
+  - default
+  - _self_

@@ -1,0 +1,27 @@
+[
+    {
+        "id": 0,
+        "table":"col : Name | Province | City | Year | Remarks\nrow 1 : Abdul Rahman Mosque [HYPER] | Kabul Province [HYPER] | Kabul [HYPER] | 2009 [] | Largest mosque in Afghanistan []\nrow 2 : Friday Mosque of Kandahar [HYPER] | Kandahar Province [HYPER] | Kandahar [HYPER] | 1750 [] | Houses the cloak of the Islamic prophet Muhammad [HYPER]\nrow 3 : Omar Al-Farooq Mosque [] | Kandahar Province [] | Kandahar [] | 2014 [] | Built on the site that was a popular cinema of Kandahar . [ 1 ] []",
+        "question": "Who were the builders of the mosque in Herat with fire temples ?",
+        "code": "My answer is Ghurids."
+    },
+    {
+        "id": 1,
+        "table": "col : No | Rider | Team | Motorcycle\nrow 1 : 1 [] | Carl Fogarty [HYPER] | Ducati Performance [] | Ducati 996 [HYPER]\nrow 2 : 4 [] | Akira Yanagawa [HYPER] | Kawasaki Racing Team [] | Kawasaki ZX-7RR [HYPER]\nrow 3 : 5 [] | Colin Edwards [HYPER] | Castrol Honda [] | Honda RC45 [HYPER]",
+        "question": "After what season did the number 7 competitor retire ?",
+        "code": "My answer is 2006."
+    },
+    {
+        "id": 0,
+        "table":"col : Year | Winner | Position | School\nrow 1 : None [HYPER] | Ron Ryan [HYPER] | Right wing [HYPER] | Colby [HYPER]\nrow 2 : None [HYPER] | Bob Brinkworth [] | Center [HYPER] | Rensselaer [HYPER]\nrow 3 : None [HYPER] | Bob Brinkworth [] | Center [HYPER] | Rensselaer [HYPER]",
+        "question": "What year was the 1971-72 ECAC Hockey Player of the Year born ?",
+        "code": "My answer is 1950."
+    },
+    {
+        "id": 0,
+        "table":"col : Name | Unit | Date of action | Place of action\nrow 1 : William Allan [HYPER] | 024 24th Regiment of Foot [HYPER] | 1879-02-22 22-23 January 1879 [] | Battle of Rorke 's Drift , Natal Colony [HYPER]\nrow 2 : William Beresford [HYPER] | 009 9th Lancers [HYPER] | 1879-07-03 3 July 1879 [] | White Umfolozi River ( near Ulundi ) , Zululand [HYPER]\nrow 3 : Anthony Booth [HYPER] | 080 80th Regiment of Foot [HYPER] | 1879-03-12 12 March 1879 [] | Battle of Intombe , Transvaal [HYPER]",
+        "question": "What battle did the man born on 7 December 1839 fight in ?",
+        "code": "My answer is Battle of Hlobane."
+
+    }
+]

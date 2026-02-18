@@ -1,0 +1,39 @@
+name: odyssey
+
+paths:
+  root_dir: /root/TextDBQA
+  data_dir: ${model.paths.root_dir}/data/${benchmark.folder}/odyssey/preprocess
+  results_dir: ${model.paths.root_dir}/data/${benchmark.folder}/odyssey/results
+  benchmark_dir: ${model.paths.root_dir}/benchmark
+  cache_dir: ${root_mount_path}/Experiments/${benchmark.folder}_changed_test/odyssey/cache
+
+
+# Outputs
+outputPath_entity_extraction: ${model.paths.data_dir}/ee_predictions_${model.modelName}.json
+outputPath_header_extraction: ${model.paths.data_dir}/he_predictions_${model.modelName}.json
+outputPath_entity_to_header_mapping: ${model.paths.data_dir}/e2h_predictions_${model.modelName}.json
+outputPath_start_point_initiation: ${model.paths.data_dir}/start_points_${model.modelName}.json
+outputPath_make_ent_doc_graphs: ${model.paths.data_dir}/entity_doc_graph
+outputPath_inference: ${model.paths.results_dir}/base/qa_results_${model.modelName}.json
+# Outputs for embeddings
+outputPath_table_encoding: ${model.paths.cache_dir}/table_embeddings
+embed_save_path: ${model.paths.cache_dir}/entity_embeddings
+node_save_path: ${model.paths.cache_dir}/entity_nodes
+
+# Inputs (reuse same variables)
+entityExtractionPath: ${model.outputPath_entity_extraction}
+headerExtractionPath: ${model.outputPath_header_extraction}
+entityToHeaderMappingPath: ${model.outputPath_entity_to_header_mapping}
+startPointsPath: ${model.outputPath_start_point_initiation}
+entityDocumentGraphPath: ${model.outputPath_make_ent_doc_graphs}
+rootEmb: ${model.paths.cache_dir}
+
+# Model
+use_accelerate: false
+modelName: gpt-3.5-turbo
+use_minimal_reasoning: False
+temperature: 0.0
+top_p: 0.9
+max_tokens: 512
+simThreshold: 0.8
+insPrompt: For entity matching

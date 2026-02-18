@@ -1,0 +1,4 @@
+defaults:
+  - db: nba
+  - query_generation: non_nested
+  - question_verbalisation: default

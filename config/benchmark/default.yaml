@@ -1,0 +1,8 @@
+data_dir_path: ${root_mount_path}
+source_data_dir: ${benchmark.data_dir_path}/source_data
+context_mode: global # query_specific, global
+db_suffix: ${.name}
+
+# Dataloader configuration
+dataloader:
+  shuffle: false  # Set to true to shuffle test data

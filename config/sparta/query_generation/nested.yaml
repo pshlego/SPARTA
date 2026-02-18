@@ -1,0 +1,16 @@
+inner_query_block_wo_agg_path: /root/TextDBQA/data/sparta/results/wo_agg.out
+inner_query_block_w_agg_path: /root/TextDBQA/data/sparta/results/w_agg.out
+is_prov: true
+approach_name: postorder
+# approach_name: oneshotk
+
+hyperparams:
+  candidate_num: 3
+  sample_size: 5
+  height: 1
+  max_nested_predicate_gen_count: 1000
+  nested_predicate_types: [type-n]
+
+defaults:
+  - non_nested
+  - _self_

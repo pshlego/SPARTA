@@ -1,5 +1,4 @@
 corpus/
-data
 outputs/
 schema/
 translation_results/
@@ -11,4 +10,5 @@ Workload/
 *.log
 *.pyc
 .env
+claude_prompt
 

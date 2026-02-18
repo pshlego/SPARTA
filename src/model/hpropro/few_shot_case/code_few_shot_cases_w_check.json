@@ -1,0 +1,61 @@
+[
+    {
+        "id": 0,
+        "table":"col : Station | Type | Capacity ( MW ) | Commissioned | Location 0°47'43.0S 37°45'09.0E\nrow 1 : Gitaru Hydroelectric Power Station [HYPER] | Reservoir [HYPER] | 225 [] | 1999 [] | 00°47′43″S 37°45′09″E / 0.79528°S 37.75250°E / -0.79528 ; 37.75250 ( Gitaru Hydroelectric Power Station ) []\nrow 2 : Sang'oro Hydroelectric Power Station [HYPER] | Run of river [HYPER] | 21.2 [] | 2013 [] | 00°21′13″S 34°48′48″E / 0.35361°S 34.81333°E / -0.35361 ; 34.81333 ( Sang'oro Hydroelectric Power Station ) []\nrow 3 : Tana Hydroelectric Power Station [HYPER] | Reservoir [HYPER] | 20 [] | 2010 [] | 00°47′08″S 37°15′55″E / 0.78556°S 37.26528°E / -0.78556 ; 37.26528 ( Tana Hydroelectric Power Station ) []",
+        "question": "The most recently commissioned Hydroelectric Power Station is located on what river in Kenya ?",
+        "code": "```python\ndef solve(table) -> str:\n    result = ''\n    latest_year = None\n    latest_station = None\n    for index, row in table.iterrows():\n        if latest_year is None or check(row['Commissioned'][0], latest_year, '>'):\n            latest_year = row['Commissioned'][0]\n            latest_station = row['Station'] \n    return extract_info(latest_station[1], 'What river is it located on?')\n```"
+    },
+    {
+        "id": 0,
+        "table": "col : Medal | Name | Sport | Event | Time/Score | Date\nrow 1 : Gold [] | Andrew Gemmell Sean Ryan Ashley Twichell [HYPER] | Open water swimming [HYPER] | 5 km team event [HYPER] | 57:00.6 [] | July 21 []\nrow 2 : Gold [] | Jessica Hardy [HYPER] | Swimming [HYPER] | Women 's 50 m breaststroke [HYPER] | 30.19 [] | July 31 []\nrow 3 : Gold [] | Ryan Lochte [HYPER] | Swimming [HYPER] | Men 's 400 m individual medley [HYPER] | 4:07.13 [] | July 31 []",
+        "question": "What is the name of the oldest person whose result , not including team race , was above 2 minutes ?",
+        "code": "```python\ndef solve(table) -> str:\n    oldest_person = None\n    oldest_age = 0\n    for index, row in table.iterrows():\n        if 'team' not in row['Event'][0].lower() and check(convert_datetime(row['Time/Score'][0]).minute, 2, '>'):\n            age = int(extract_info(row['Name'][1] , 'age'))\n            if check(oldest_age, age, '<'):\n                oldest_age = age\n                oldest_person = row['Name'][0]\n    return oldest_person\n```"
+    },
+    {
+        "id": 0,
+        "table":"col : Season | Team | Record | Playoffs result\nrow 1 : 2004-05 [HYPER] | San Antonio Spurs [HYPER] | 59-23 ( .720 ) [] | Won NBA Finals [HYPER]\nrow 2 : 2005-06 [HYPER] | San Antonio Spurs [HYPER] | 63-19 ( .768 ) [] | Lost Conference Semifinals [HYPER]\nrow 3 : 2006-07 [HYPER] | Dallas Mavericks [HYPER] | 67-15 ( .817 ) [] | Lost First Round [HYPER]",
+        "question": "What season was it that this team was hoping to improve upon their 60-22 output from the previous season ?",
+        "knowledge": "2005–06 San Antonio Spurs season:\tThey began the season hoping to improve upon their 59-23 output from the previous season .\n2006–07 Dallas Mavericks season:\tThey began the season hoping to improve upon their 60-22 output from the previous season .",
+        "code": "```python\ndef solve(table) -> str:\n    result = ''\n    for index, row in table.iterrows():\n        if check(extract_info(row['Season'][1] , 'What was the output from the previous season?'), '60-22', '=='):\n            result = row['Season'][0]\n            if result != 'NOT_AVAILABLE':\n                return result\n    return result\n```"
+    },
+    {
+        "id": 0,
+        "table":"col : Original NFL team | Player | Pos | College | Conf\nrow 1 : Denver Broncos [HYPER] | Joe DiVito [HYPER] | P / QB [HYPER] | Boston College [HYPER] | Ind [HYPER]\nrow 2 : Denver Broncos [HYPER] | Terry Erwin [HYPER] | RB [HYPER] | Boston College [HYPER] | Ind [HYPER]\nrow 3 : Denver Broncos [HYPER] | Billy Van Heusen [HYPER] | P / WR [HYPER] | Maryland [HYPER] | ACC [HYPER]",
+        "question": "How many franchise record punts did the player drafted by the Denver Broncos out of Maryland in the 1968 NFL/AFL Draft have against the Cincinnati Bengals ?",
+        "code": "```python\ndef solve(table) -> str:\n    result = ''\n    for index, row in table.iterrows():\n        if check(row['Original NFL team'][0], 'Denver Broncos', '==') and check(row['College'][0], 'Maryland', '=='):\n            result = extract_info(row['Player'][1] , 'franchise record punts against the Cincinnati Bengals')\n            if result != 'NOT_AVAILABLE':\n                return result\n    return result\n```"
+    },
+    {
+        "id": 5,
+        "table": "col : Venue  | Sports  | Capacity\nrow 1 : Bjelašnica [HYPER] | Alpine skiing ( men ) [HYPER] | Not listed []\nrow 2 : Igman , Malo Polje [HYPER] | Nordic combined ( ski jumping ) , Ski jumping [HYPER] | Not listed []\nrow 3 : Igman , Veliko Polje [HYPER] | Biathlon , Cross-country skiing , Nordic combined ( Cross-country skiing ) [HYPER] | Not listed []\n",
+        "question": "What is the capacity of the venue that was named in honor of Juan Antonio Samaranch in 2010 after his death ?",
+        "code": "```python\ndef solve(table) -> str:\n    for i in range(len(table)):\n        if check(extract_span(table.iloc[i]['Venue'][1] , 'What is it named in honor of?'), 'Juan Antonio Samaranch', '=='):\n            return table.iloc[i]['Capacity'][0]\n```"
+    },
+    {
+        "id": 1,
+        "table": "col : Round ( Pick ) | Name | Position | School\nrow 1 : 1 ( 20 ) [] | Joshua Fields [HYPER] | Right-handed pitcher [HYPER] | University of Georgia [HYPER]\nrow 2 : 2 ( 20 ) [] | Dennis Raben [] | Outfielder [HYPER] | University of Miami [HYPER]\nrow 3 : 3 ( 98 ) [] | Aaron Pribanic [] | Right-handed pitcher [HYPER] | University of Nebraska [HYPER]",
+        "question": "Which teams has the player drafted by the Seattle Mariners in 2008 out of University of Georgia played for in the MLB ?",
+        "code": "```python\ndef solve(table) -> str:\n    result = ''\n    for index, row in table.iterrows():\n        if check(row['School'][0], 'University of Georgia', '=='):\n            result = extract_info(row['Name'][1], 'teams played for in the MLB')\n            if result != 'NOT_AVAILABLE':\n                return result\n    return result\n```"
+    },
+    {
+        "id": 0,
+        "table":"col : Date | Language | Language family | Region\nrow 1 : early 2nd millennium BCE [] | Sumerian [HYPER] | isolate [HYPER] | Mesopotamia [HYPER]\nrow 2 : 2nd millennium BCE [] | Eblaite [HYPER] | Semitic [HYPER] | Syria [HYPER]\nrow 3 : ca . 1100 BCE [] | Hittite [HYPER] | Anatolian [HYPER] | Anatolia [HYPER]",
+        "question": "What was the language family that was used in Hattusa , as well as parts of the northern Levant and Upper Mesopotamia ?",
+        "knowledge": "Hittite language:\tHittite ( natively 𒉈𒅆𒇷 nešili [ in the language ] of Neša ) , also known as Nesite and Neshite , was an Indo-European language that was spoken by the Hittites , a people of Bronze Age Anatolia who created an empire , centred on Hattusa , as well as parts of the northern Levant and Upper Mesopotamia .",
+        "code": "```python\ndef solve(table) -> str:\n    for index, row in table.iterrows():\n        if check(row['Language'][0], 'Hittite', '=='):\n            return row['Language family'][0]\n```"
+    },
+    {
+        "id": 1,
+        "table": "col : No | Rider | Team | Motorcycle\nrow 1 : 1 [] | Carl Fogarty [HYPER] | Ducati Performance [] | Ducati 996 [HYPER]\nrow 2 : 4 [] | Akira Yanagawa [HYPER] | Kawasaki Racing Team [] | Kawasaki ZX-7RR [HYPER] \nrow 3 : 5 [] | Colin Edwards [HYPER] | Castrol Honda [] | Honda RC45 [HYPER] ",
+        "question": "After what season did the number 7 competitor retire ?",
+        "code": "```python\ndef solve(table) -> str:\n    result = ''\n    for index, row in table.iterrows():\n        if check(row['No'][0], 7, '=='):\n            result = extract_span(row['Rider'][1], 'Which season to retire?')\n            if result != 'NOT_AVAILABLE':\n                return result\n    return result\n```"
+    },    
+    {
+        "id": 0,
+        "table":"col : Rank | Film | Year | Director | Studio ( s ) | Worldwide gross\nrow 1 : 1 [] | Amazon Obhijaan [HYPER] | 2017 [] | Kamaleswar Mukherjee [HYPER] | Shree Venkatesh Films [HYPER] | ₹ 48.63 crore ( US $ 6.8 million ) []\nrow 2 : 2 [] | Chander Pahar [HYPER] | 2013 [] | Kamaleswar Mukherjee [HYPER] | Shree Venkatesh Films [HYPER] | ₹ 15 crore ( US $ 2.1 million ) []\nrow 3 : 5 [] | Rangbaaz [HYPER] | 2013 [] | Raja Chanda [HYPER] | Surinder Films [HYPER] | ₹ 9 crore ( US $ 1.3 million ) []",
+        "question": "The story of a cab driver witnessing a murder by a criminal kingpin leads to extensive loss in an Indian film directed by one of the leading ad film makers in Kolkata who has made how many ad films in his career ?",
+        "knowledge": "Raja Chanda:\tHe is one of the leading ad film makers in Kolkata and has made 450+ ad films .",
+        "code": "```python\ndef solve(table) -> str:\n    result = ''\n    for index, row in table.iterrows():\n        if check(row['Director'][0], 'Raja Chanda', '==') and check(extract_info(row['Film'][1], 'story), 'a cab driver witnessing a murder by a criminal kingpin leads to extensive loss', '=='):\n            result = extract_info(row['Director'][1] , 'ad films')\n            if result != 'NOT_AVAILABLE':\n                return result\n    return result\n```"
+    }
+    
+
+]

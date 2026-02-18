@@ -1,0 +1,7 @@
+# Medical benchmark configuration
+db_name: medical
+data_dir_path: /root/TextDBQA/data/sparta/docker-entrypoint-initdb.d/medical/datas
+
+defaults:
+  - base
+  - _self_

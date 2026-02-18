@@ -1,0 +1,6 @@
+name: gpt-5
+
+
+max_tokens: 16384
+max_new_tokens: 4096
+temperature: 1

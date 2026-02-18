@@ -1,0 +1,7 @@
+db_name: nba
+source_data_dir_path: /root/TextDBQA/data/sparta/docker-entrypoint-initdb.d/nba/source_tables
+grounding_data_dir_path: /root/TextDBQA/data/sparta/docker-entrypoint-initdb.d/nba/grounding_tables
+
+defaults:
+  - base
+  - _self_

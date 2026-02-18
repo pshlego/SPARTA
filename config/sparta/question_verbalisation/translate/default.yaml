@@ -1,0 +1,10 @@
+dataset_test: /root/TextDBQA/data/sparta/results/w_agg.out
+output_path: /root/TextDBQA/data/sparta/verbalisation_results/translated_data.json
+examples_path: /root/TextDBQA/data/sparta/verbalisation_results/icl-top-spider-exp-4.csv
+port: 5440
+db_name: nba
+
+llm_addr: http://141.223.199.149:30000/generate
+temperature: 0.5
+top_p: 0.9
+max_new_tokens: 128

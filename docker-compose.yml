@@ -1,8 +1,10 @@
-version: "3.8"
 services:
   workspace:
-    image: anonymous433/sparta_workspace
-    container_name: sparta_workspace
+    image: anonymous433/sparta_workspace:server
+    container_name: textdbqa_workspace
+    shm_size: 24gb
+    ulimits:
+      memlock: -1
     stdin_open: true
     tty: true
     network_mode: "host"
@@ -12,18 +14,21 @@ services:
           devices:
             - capabilities: [gpu]
     volumes:
-      - ./:/root/sparta/
+      - /etc/localtime:/etc/localtime:ro
+      - ./:/root/TextDBQA
+      - ./data:/root/TextDBQAMountSpace
+    working_dir: /root/TextDBQA
   database:
     image: postgres:15.1
-    container_name: sparta_database
+    container_name: textdbqa_database
     stdin_open: true
     tty: true
     shm_size: '150gb'
     ports:
-        - "5437:5432"
+        - "5440:5432"
     environment:
         POSTGRES_USER: "postgres"
         POSTGRES_PASSWORD: "postgres"
     volumes:
-        - ./Benchmark/RFDatabaseConstruction/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+        - ./data/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
         - ./data/postgresql:/var/lib/postgresql/data

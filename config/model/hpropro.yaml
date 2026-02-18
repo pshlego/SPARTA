@@ -1,0 +1,18 @@
+name: hpropro
+
+# Model parameters
+model: gpt-5
+temperature: 0.0
+shot_num: 4
+
+# Data paths (resolved via benchmark config)
+output_path: ${root_mount_path}/hpropro_results/${benchmark.folder}
+few_shot_case_path: ${root_dir_path}/src/model/hpropro/few_shot_case
+preprocessed_tables_path: ${root_mount_path}/hpropro_preprocessed/${benchmark.folder}/preprocessed_tables.pkl
+passage_store_path: ${root_mount_path}/hpropro_preprocessed/${benchmark.folder}/passage_store.json
+helios_processed_path:  # Path to HELIOS processed data for query-specific SPARTA mode
+
+# Execution settings
+simplify: true
+reflection: true
+logging: true

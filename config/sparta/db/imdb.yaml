@@ -1,0 +1,7 @@
+# Medical benchmark configuration
+db_name: imdb
+excel_path: /root/TextDBQA/data/sparta/docker-entrypoint-initdb.d/imdb/IMDbmoviesDataandERDfinal.xlsx
+
+defaults:
+  - base
+  - _self_

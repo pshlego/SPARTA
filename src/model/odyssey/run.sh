@@ -1,0 +1,9 @@
+export CUDA_VISIBLE_DEVICES=0,1,2,3
+python src/model/odyssey/modules/entity_extraction.py
+python src/model/odyssey/modules/header_extraction.py
+python src/model/odyssey/modules/entity_to_header_mapping.py
+python src/model/odyssey/modules/entity_encoding.py
+python src/model/odyssey/modules/table_encoding.py
+python src/model/odyssey/modules/make_ent_doc_graphs.py
+python src/model/odyssey/modules/init_start_points.py
+python src/model/odyssey/modules/inference.py

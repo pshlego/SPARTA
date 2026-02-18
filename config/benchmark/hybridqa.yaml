@@ -1,0 +1,12 @@
+name: hybridqa
+folder: hybridqa
+workload_file_path: ${.raw_dataset_path}
+
+raw_dataset_path: ${root_mount_path}/HybridQA/released_data/dev.traced.json
+raw_table_dir_path: ${root_mount_path}/HybridQA/WikiTables-WithLinks/tables_tok/
+raw_passage_dir_path: ${root_mount_path}/HybridQA/WikiTables-WithLinks/request_tok/
+context_mode: global # query_specific, global
+
+defaults:
+  - default
+  - _self_

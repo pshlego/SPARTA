@@ -1,0 +1,22 @@
+name: sparta
+folder: sparta/${.domain}
+db_suffix: ${.name}_${.domain}
+# Required: specify domain when running
+# python run.py benchmark=sparta benchmark.domain=nba
+domain: nba  # nba | movie | medical
+split: test  # dev | test
+
+# SPARTA data paths
+hf_dataset_name: pshlego/SPARTA
+dataset_dir_path: ${root_mount_path}/corpus
+# Optional: QID filter path
+qid_filter_path: null
+
+# Context mode: global | query_specific
+context_mode: global
+# Optional: HELIOS retrieval results path (used in query_specific mode)
+helios_text_path: null
+
+defaults:
+  - default
+  - _self_

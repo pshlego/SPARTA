@@ -1,0 +1,16 @@
+root_dir_path: "/root/TextDBQA/"
+root_mount_path: "/root/TextDBQAMountSpace"
+user_id: "shpark"
+seed: 42
+
+# Defaults
+defaults:
+    - _self_
+    - sparta: default
+    - benchmark: sparta
+    - model: hpropro
+
+hydra:
+  output_subdir: null
+  run:
+    dir: ./runs/
