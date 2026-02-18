@@ -109,10 +109,11 @@ If you are comfortable with your code being **publicly visible** on the leaderbo
 
 If you **do not** want your code to be publicly displayed on the leaderboard, first submit your prediction file through the leaderboard website as usual, then send a supplementary email to **both** **pshlego@gmail.com** and **jekim@dblab.postech.ac.kr** with your code. Your code will only be used for internal verification and will not be shared.
 
-You **must** include the **date and time of your website submission** in the email so we can match it to your leaderboard entry. Use the following format: `Feb 18, 2026, 12:53 AM`
+After submitting on the website, you will receive a unique **Submission ID** on the result page. You **must** include this **Submission ID** and the **date and time of your submission** in your email so we can match it to your leaderboard entry.
 
 Please include the following in your email:
-- **Website submission date and time** (e.g., `Feb 18, 2026, 12:53 AM`)
+- **Submission ID** (displayed on the result page after your website submission)
+- **Submission date and time** (e.g., `Feb 18, 2026, 12:53 AM`)
 - Your code as a compressed archive (`.zip` or `.tar.gz`).
 - A **README** with clear instructions on how to reproduce your results.
 - Execution logs of your model's run.
@@ -137,7 +138,7 @@ If you need to contact us regarding your submission (e.g., to provide supplement
 
 **To:** pshlego@gmail.com, jekim@dblab.postech.ac.kr *(please send to both addresses)*
 
-**Subject:** `[SPARTA Submission] {Track: Oracle/Retrieval} - {Method Name}`
+**Subject:** `[SPARTA Submission] #{Submission ID} - {Track: Oracle/Retrieval} - {Method Name}`
 
 **Body:**
 
@@ -146,7 +147,8 @@ Dear SPARTA Team,
 
 I would like to submit my results for the SPARTA leaderboard.
 
-- Website Submission Date/Time: [e.g., Feb 18, 2026, 12:53 AM]
+- Submission ID: [e.g., 42]
+- Submission Date/Time: [e.g., Feb 18, 2026, 12:53 AM]
 - Track: [Oracle / Retrieval]
 - Method Name: [Your method name]
 - Author(s): [Your name(s) or "Anonymous"]
