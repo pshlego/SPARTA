@@ -187,6 +187,10 @@ python src/sparta/QueryGeneration/nested_query_generation.py sparta/query_genera
 python src/sparta/QueryGeneration/nested_query_generation.py sparta/query_generation=nested sparta.query_generation.approach_name=postorder sparta.query_generation.is_prov=True
 ```
 
+## Leaderboard Submission
+
+If you want to submit your results to the SPARTA leaderboard, please refer to the [Submission Guidelines](sparta_submission_guideline.md) for detailed instructions.
+
 ## Languages
 
 The dataset is in English language.
