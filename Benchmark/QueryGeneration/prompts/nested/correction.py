@@ -10,7 +10,7 @@ Ensure the following requirements:
 - You may also adjust the comparison operator (e.g., > to >=, < to <=) or the value of the problematic condition to relax the filtering criteria. 
 - Do not delete the join predicate in the WHERE clause of the problematic subquery Q (e.g., WHERE outer_table_name.column_name=inner_table_name.column_name).
 """
-# - Do not replace the dynamic subquery with a constant value or list of values; instead, adjust the comparison operator (e.g., > to >=, < to <=) or the value of the problematic condition to relax the filtering criteria. 
+# - Do not replace the dynamic subquery with a constant value or list of values; instead, adjust the comparison operator (e.g., > to >=, < to <=) or the value of the problematic condition to relax the filtering criteria.
 
 user_empty_result_nested_predicate_correction_prompt = """
 Original SQL Query:

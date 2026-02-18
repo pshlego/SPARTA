@@ -5,6 +5,7 @@ from sqlglot.expressions import Column
 import copy
 import re
 
+
 def rewrite_non_nested_query_with_groupby(sql: str) -> Tuple[str, str]:
     ast = parse_one(sql)
 
@@ -13,7 +14,14 @@ def rewrite_non_nested_query_with_groupby(sql: str) -> Tuple[str, str]:
     table_alias = table.alias_or_name
 
     select_clause = ast.args["expressions"]
-    agg_expr = next((e for e in select_clause if isinstance(e.this, (exp.AggFunc, exp.Sum, exp.Avg, exp.Count))), None)
+    agg_expr = next(
+        (
+            e
+            for e in select_clause
+            if isinstance(e.this, (exp.AggFunc, exp.Sum, exp.Avg, exp.Count))
+        ),
+        None,
+    )
     if not agg_expr:
         raise NotImplementedError("No aggregate function found.")
     agg_func = agg_expr.this
@@ -22,7 +30,7 @@ def rewrite_non_nested_query_with_groupby(sql: str) -> Tuple[str, str]:
 
     having_clause = ast.args.get("having")
     having_sql = having_clause.sql() if having_clause else None
-    
+
     group_clause = ast.args.get("group")
     group_keys = [g.sql() for g in group_clause.expressions] if group_clause else []
     group_col = group_keys[0] if group_keys else "group_col"
@@ -32,10 +40,10 @@ def rewrite_non_nested_query_with_groupby(sql: str) -> Tuple[str, str]:
 
     limit_clause = ast.args.get("limit")
     limit_sql = limit_clause.sql() if limit_clause else ""
-    
+
     # Phase 1
     location = 0
-    if order_sql or limit_sql :
+    if order_sql or limit_sql:
         p1 = f"""
         SELECT
             writegrp({location}, ARRAY_AGG({table_alias}.tuid ORDER BY {table_alias}.tuid )) AS tuid,
@@ -60,10 +68,9 @@ def rewrite_non_nested_query_with_groupby(sql: str) -> Tuple[str, str]:
         )
         SELECT * FROM grouped_{table_alias};
         """.strip()
-        
 
     # Phase 2
-    if isinstance(agg_func, exp.Count) and agg_col == '*':
+    if isinstance(agg_func, exp.Count) and agg_col == "*":
         agg_prov_expr = "wh.y"
     else:
         agg_prov_expr = f"dd({table_alias}.{agg_col}) || wh.y"
@@ -86,8 +93,9 @@ def rewrite_non_nested_query_with_groupby(sql: str) -> Tuple[str, str]:
     FROM grouped_{table_alias}
     GROUP BY tuid;
     """.strip()
-    
+
     return p1, p2
+
 
 def extract_conditions(expr):
     """Recursively extract (col, op, val) triples from a WHERE clause."""
@@ -105,7 +113,9 @@ def extract_conditions(expr):
             col = expr.right.name
             val = expr.left.sql()
         else:
-            raise NotImplementedError("At least one side of the condition must be a column.")
+            raise NotImplementedError(
+                "At least one side of the condition must be a column."
+            )
         op_map = {
             exp.EQ: "=",
             exp.NEQ: "<>",
@@ -117,7 +127,7 @@ def extract_conditions(expr):
         result.append((col, op_map[type(expr)], val))
     else:
         raise NotImplementedError("Unsupported WHERE clause structure.")
-    
+
     return result
 
 
@@ -129,16 +139,18 @@ def rewrite_non_nested_query(sql: str) -> tuple[str, str]:
     if not table:
         raise ValueError("No FROM clause found")
     table_name = table.name
-    
+
     # 2. SELECT : Get Projection Columns
     select_exprs = ast.args["expressions"][0]
     select_column = select_exprs.alias_or_name
-    
+
     # 3. WHERE
     where_expression = ast.args.get("where")
     if where_expression:
         conditions = extract_conditions(where_expression.this)  # List[(col, op, val)]
-        where_sql = " AND ".join(f"{table_name}.{col} {op} {val}" for col, op, val in conditions)
+        where_sql = " AND ".join(
+            f"{table_name}.{col} {op} {val}" for col, op, val in conditions
+        )
         where_clause = f"WHERE {where_sql}"
     else:
         where_clause = ""
@@ -148,10 +160,10 @@ def rewrite_non_nested_query(sql: str) -> tuple[str, str]:
 
     limit_clause = ast.args.get("limit")
     limit_sql = limit_clause.sql() if limit_clause else ""
-    
+
     location = 0  # hardcoded log location
     # Phase 1 rewrite
-    if order_sql or limit_sql :
+    if order_sql or limit_sql:
         p1 = f"""
         SELECT
             writelog({location}, {table_name}.tuid) AS tuid,
@@ -174,7 +186,7 @@ def rewrite_non_nested_query(sql: str) -> tuple[str, str]:
         SELECT * FROM filtered_{table_name};
         """.strip()
 
-    # Phase 2 rewrite   
+    # Phase 2 rewrite
     if where_expression:
         prov_cols = f"{table_name}.{select_column} || wh.y AS {select_column}"
         toys = " || ".join(f"toY({table_name}.{col})" for col, _, _ in conditions)
@@ -183,7 +195,7 @@ def rewrite_non_nested_query(sql: str) -> tuple[str, str]:
         prov_cols = f"{table_name}.{select_column} AS {select_column}"
         whys_clause = ""
     dd_cols = f"dd(f.{select_column})"
-    
+
     p2 = f"""
     WITH filtered_{table_name}(tuid, {select_column}) AS (
     SELECT
@@ -201,10 +213,11 @@ def rewrite_non_nested_query(sql: str) -> tuple[str, str]:
 
     return p1, p2
 
+
 def extract_outer_table_names(ast) -> tuple:
     tables = set()
     join_conditions = []
-    
+
     # FROM
     from_clause = ast.args.get("from")
     if from_clause:
@@ -220,14 +233,17 @@ def extract_outer_table_names(ast) -> tuple:
         join_condition = join.args.get("on")
         if join_condition:
             condition_str = join_condition.sql()
-            modified_condition = re.sub(r'(\b\w+\b)\.(\b\w+\b)', r'\1_outer.\2', condition_str)
+            modified_condition = re.sub(
+                r"(\b\w+\b)\.(\b\w+\b)", r"\1_outer.\2", condition_str
+            )
             join_conditions.append(modified_condition)
-    
+
     return tables, join_conditions
+
 
 def rewrite_nested_query(sql: str) -> tuple[str, str]:
     ast = parse_one(sql)
-    
+
     # 1. Outer table info
     outer_table_names, outer_join_conditions = extract_outer_table_names(ast)
     outer_join_columns = []
@@ -241,7 +257,7 @@ def rewrite_nested_query(sql: str) -> tuple[str, str]:
     select_table = select_expr.table
     if select_table == "":
         select_table = list(outer_table_names)[0]
-    
+
     # 3. WHERE clause
     where_clause = ast.args.get("where")
     if not where_clause:
@@ -252,7 +268,7 @@ def rewrite_nested_query(sql: str) -> tuple[str, str]:
     eq_exprs = []
     exists_exprs = []
     nonsub_exprs = []
-    
+
     def split_conditions(expr):
         if isinstance(expr, exp.And):
             split_conditions(expr.left)
@@ -268,16 +284,20 @@ def rewrite_nested_query(sql: str) -> tuple[str, str]:
             exists_exprs.append(expr)
         else:
             raise NotImplementedError(f"Unsupported expression: {expr}")
-    
+
     split_conditions(conditions)
-    
+
     joins = []
     tuid_sources = [f"{tbl}_outer.tuid" for tbl in outer_table_names]
     readlog_args = [f"{tbl}_outer.tuid" for tbl in outer_table_names]
     from_tables_p2 = [f"{tbl}_2 AS {tbl}_outer" for tbl in outer_table_names]
-    whys = [" || ".join(f"toY({c})" for c in outer_join_columns)] if outer_join_columns else []
-    cte_parts = [] # for type A, JA
-    
+    whys = (
+        [" || ".join(f"toY({c})" for c in outer_join_columns)]
+        if outer_join_columns
+        else []
+    )
+    cte_parts = []  # for type A, JA
+
     # Type-N, J (IN subqueries)
     for in_expr in in_exprs:
         outer_col = in_expr.this.name
@@ -293,44 +313,53 @@ def rewrite_nested_query(sql: str) -> tuple[str, str]:
         # Subquery Column
         inner_col_expr = inner_select.args["expressions"][0]
         inner_col = inner_col_expr.alias_or_name or inner_col_expr.name
-        # Subquery Where 
+        # Subquery Where
         inner_where = inner_select.args.get("where")
-        filters, correlations, filter_cols, correlation_cols = extract_filters(inner_where.this, outer_table_names, inner_table_name, inner_table_alias) if inner_where else ([], [], [], [])
-        
+        filters, correlations, filter_cols, correlation_cols = (
+            extract_filters(
+                inner_where.this, outer_table_names, inner_table_name, inner_table_alias
+            )
+            if inner_where
+            else ([], [], [], [])
+        )
+
         # Naming inner table
-        inner_alias_name, replace_alias = generate_unique_inner_alias(inner_table_name, joins)
+        inner_alias_name, replace_alias = generate_unique_inner_alias(
+            inner_table_name, joins
+        )
         # For phase1
         tuid_sources.append(f"{inner_alias_name}.tuid")
-        join = f"JOIN {inner_table_name}_1 AS {inner_alias_name} ON {outer_table_name}_outer.{outer_col} = {inner_alias_name}.{inner_col}" 
+        join = f"JOIN {inner_table_name}_1 AS {inner_alias_name} ON {outer_table_name}_outer.{outer_col} = {inner_alias_name}.{inner_col}"
         if correlations:
-            join_parts = [replace_alias(f) for f in correlations] + [replace_alias(f) for f in filters]
+            join_parts = [replace_alias(f) for f in correlations] + [
+                replace_alias(f) for f in filters
+            ]
         else:
             join_parts = [replace_alias(f) for f in filters]
         if join_parts:
             join += " AND " + " AND ".join(join_parts)
         joins.append(join)
-        
+
         # Subquery Join
-        (join_tables,
-        join_columns,
-        join_clause_inner,
-        filters
-        ) = processing_join_in_subquery(
-        inner_select,
-        inner_table_alias,
-        inner_table_name,
-        inner_alias_name,
-        joins,
-        filters)
+        (join_tables, join_columns, join_clause_inner, filters) = (
+            processing_join_in_subquery(
+                inner_select,
+                inner_table_alias,
+                inner_table_name,
+                inner_alias_name,
+                joins,
+                filters,
+            )
+        )
         joins.extend(join_clause_inner)
-        
+
         # For phase2
         readlog_args.append(f"{inner_alias_name}.tuid")
         from_tables_p2.append(f"{inner_table_name}_2 AS {inner_alias_name}")
         for table_name, alias in join_tables:
             readlog_args.append(f"{alias}.tuid")
             from_tables_p2.append(f"{table_name}_2 AS {alias}")
-            tuid_sources.append(f"{alias}.tuid") # for phase1
+            tuid_sources.append(f"{alias}.tuid")  # for phase1
         why = f"toY({outer_table_name}_outer.{outer_col}) || toY({inner_alias_name}.{inner_col})"
         for c in [replace_alias(f) for f in correlation_cols]:
             why += f" || toY({c})"
@@ -339,7 +368,7 @@ def rewrite_nested_query(sql: str) -> tuple[str, str]:
         for c in join_columns:
             why += f" || toY({c})"
         whys.append(why)
-        
+
     # Type-J (Exists subqueries)
     for exists_expr in exists_exprs:
         subquery = exists_expr
@@ -347,45 +376,59 @@ def rewrite_nested_query(sql: str) -> tuple[str, str]:
         inner_table = inner_select.find(exp.Table)
         inner_table_name = inner_table.name
         inner_table_alias = inner_table.alias
-        
+
         inner_col_expr = inner_select.args["expressions"][0]
         inner_col = inner_col_expr.alias_or_name or inner_col_expr.name
         inner_where = inner_select.args.get("where")
-        filters, correlations, filter_cols, correlation_cols = extract_filters(inner_where.this, outer_table_names, inner_table_name, inner_table_alias) if inner_where else ([], [], [], [])
-        
+        filters, correlations, filter_cols, correlation_cols = (
+            extract_filters(
+                inner_where.this, outer_table_names, inner_table_name, inner_table_alias
+            )
+            if inner_where
+            else ([], [], [], [])
+        )
+
         # outer_table_name = extract_outer_table_name_from_subquery(inner_select)
-        inner_alias_name, replace_alias = generate_unique_inner_alias(inner_table_name, joins)
+        inner_alias_name, replace_alias = generate_unique_inner_alias(
+            inner_table_name, joins
+        )
 
         tuid_sources.append(f"{inner_alias_name}.tuid")
         join = f"JOIN {inner_table_name}_1 AS {inner_alias_name} ON "
         if correlations:
-            join_parts = [replace_alias(f) for f in correlations] + [replace_alias(f) for f in filters]
+            join_parts = [replace_alias(f) for f in correlations] + [
+                replace_alias(f) for f in filters
+            ]
         else:
             join_parts = [replace_alias(f) for f in filters]
         if join_parts:
             join += " AND ".join(join_parts)
         joins.append(join)
-        
-        (join_tables,
-        join_columns,
-        join_clause_inner,
-        filters
-        ) = processing_join_in_subquery(
-        inner_select,
-        inner_table_alias,
-        inner_table_name,
-        inner_alias_name,
-        joins,
-        filters)
+
+        (join_tables, join_columns, join_clause_inner, filters) = (
+            processing_join_in_subquery(
+                inner_select,
+                inner_table_alias,
+                inner_table_name,
+                inner_alias_name,
+                joins,
+                filters,
+            )
+        )
         joins.extend(join_clause_inner)
-        
+
         readlog_args.append(f"{inner_alias_name}.tuid")
         from_tables_p2.append(f"{inner_table_name}_2 AS {inner_alias_name}")
         for table_name, alias in join_tables:
             readlog_args.append(f"{alias}.tuid")
             from_tables_p2.append(f"{table_name}_2 AS {alias}")
-            tuid_sources.append(f"{alias}.tuid") # for phase1
-        why_parts = [f"toY({c})" for c in [replace_alias(f) for f in correlation_cols] + [replace_alias(f) for f in filter_cols] + [replace_alias(f) for f in join_columns]]
+            tuid_sources.append(f"{alias}.tuid")  # for phase1
+        why_parts = [
+            f"toY({c})"
+            for c in [replace_alias(f) for f in correlation_cols]
+            + [replace_alias(f) for f in filter_cols]
+            + [replace_alias(f) for f in join_columns]
+        ]
         why = " || ".join(why_parts)
         whys.append(why)
 
@@ -415,36 +458,45 @@ def rewrite_nested_query(sql: str) -> tuple[str, str]:
         agg_col = agg_expr.this.name
         # Subquery Where
         inner_where = inner_select.args.get("where")
-        filters, correlations, filter_cols, correlation_cols  = extract_filters(inner_where.this, outer_table_names, inner_table_name, inner_table_alias) if inner_where else ([], [], [], [])
+        filters, correlations, filter_cols, correlation_cols = (
+            extract_filters(
+                inner_where.this, outer_table_names, inner_table_name, inner_table_alias
+            )
+            if inner_where
+            else ([], [], [], [])
+        )
         # Subquery Join
-        inner_alias_name, replace_alias = generate_unique_inner_alias(inner_table_name, joins)
+        inner_alias_name, replace_alias = generate_unique_inner_alias(
+            inner_table_name, joins
+        )
         filters = [replace_alias(f) for f in filters]
-        
-        (join_tables,
-        join_columns,
-        join_clause_inner,
-        filters
-        ) = processing_join_in_subquery(
-        inner_select,
-        inner_table_alias,
-        inner_table_name,
-        inner_alias_name,
-        joins,
-        filters) 
-        
-        prefix = f'{inner_alias_name}.'
-        join_projection = [col.split('.')[-1] for col in join_columns if col.startswith(prefix)]
-        if correlations: # correlation
+
+        (join_tables, join_columns, join_clause_inner, filters) = (
+            processing_join_in_subquery(
+                inner_select,
+                inner_table_alias,
+                inner_table_name,
+                inner_alias_name,
+                joins,
+                filters,
+            )
+        )
+
+        prefix = f"{inner_alias_name}."
+        join_projection = [
+            col.split(".")[-1] for col in join_columns if col.startswith(prefix)
+        ]
+        if correlations:  # correlation
             for ref in correlation_cols:
-                table, col = ref.split('.', 1)
-                if table.endswith('_outer'):
+                table, col = ref.split(".", 1)
+                if table.endswith("_outer"):
                     cor_outer_col = col
-                elif table.endswith('_inner'):
+                elif table.endswith("_inner"):
                     cor_inner_col = col
             for cor_expr in correlations:
-                OPERATOR_PATTERN = re.compile(r'(>=|<=|!=|>|<|=)')
+                OPERATOR_PATTERN = re.compile(r"(>=|<=|!=|>|<|=)")
                 m = OPERATOR_PATTERN.search(cor_expr)
-                cor_op_str = m.group(1) if m else "UNKNOWN"    
+                cor_op_str = m.group(1) if m else "UNKNOWN"
 
             cte = f"""
             agg_base_{inner_alias_name} AS 
@@ -467,7 +519,9 @@ def rewrite_nested_query(sql: str) -> tuple[str, str]:
             {'WHERE ' + ' AND '.join(filters) if filters else ''}
             )
             """
-            joins.append(f"JOIN agg_result_{inner_alias_name} ON {outer_table_name}_outer.{outer_col} {outer_op_str} agg_result_{inner_alias_name}.{agg_col} AND {outer_table_name}_outer.{cor_outer_col} {cor_op_str} agg_result_{inner_alias_name}.{cor_inner_col}")
+            joins.append(
+                f"JOIN agg_result_{inner_alias_name} ON {outer_table_name}_outer.{outer_col} {outer_op_str} agg_result_{inner_alias_name}.{agg_col} AND {outer_table_name}_outer.{cor_outer_col} {cor_op_str} agg_result_{inner_alias_name}.{cor_inner_col}"
+            )
         else:
             cte = f"""
             agg_result_{inner_alias_name}(tuid, {agg_col}) AS 
@@ -482,7 +536,9 @@ def rewrite_nested_query(sql: str) -> tuple[str, str]:
             {'WHERE ' + ' AND '.join(filters) if filters else ""})
             )
             """
-            joins.append(f"JOIN agg_result_{inner_alias_name} ON {outer_table_name}_outer.{outer_col} {outer_op_str} agg_result_{inner_alias_name}.{agg_col}")
+            joins.append(
+                f"JOIN agg_result_{inner_alias_name} ON {outer_table_name}_outer.{outer_col} {outer_op_str} agg_result_{inner_alias_name}.{agg_col}"
+            )
 
         joins.extend(join_clause_inner)
         pattern = re.compile(rf"\b{re.escape(inner_alias_name)}\.(\w+)\b")
@@ -495,25 +551,25 @@ def rewrite_nested_query(sql: str) -> tuple[str, str]:
             else:
                 fixed.append(join_stmt)
         joins = fixed
-        
+
         # For phase1
         cte_parts.append(cte)
         tuid_sources.append(f"agg_result_{inner_alias_name}.tuid")
-        
+
         # For phase2
         readlog_args.append(f"{inner_alias_name}.tuid")
         from_tables_p2.append(f"{inner_table_name}_2 AS {inner_alias_name}")
         for table_name, alias in join_tables:
             readlog_args.append(f"{alias}.tuid")
             from_tables_p2.append(f"{table_name}_2 AS {alias}")
-            tuid_sources.append(f"{alias}.tuid") # for phase1
+            tuid_sources.append(f"{alias}.tuid")  # for phase1
         why = f"toY({outer_table_name}_outer.{outer_col}) || toY({inner_alias_name}.{agg_col})"
         for c in filter_cols:
             why += f" || toY({replace_alias(c)})"
         for c in join_columns:
-            why += f" || toY({c})" 
+            why += f" || toY({c})"
         whys.append(why)
-        
+
     # Non Subquery Filter
     rewritten_exprs = []
     filter_cols = []
@@ -528,25 +584,31 @@ def rewrite_nested_query(sql: str) -> tuple[str, str]:
                 col.set("table", exp.to_identifier(table + "_outer"))
                 filter_cols.append(f"{table}_outer.{column}")
         rewritten_exprs.append(expr_copy.sql())
-    if rewritten_exprs:    
+    if rewritten_exprs:
         if rewritten_exprs:
             where_clause_p1 = " WHERE " + " AND ".join(rewritten_exprs)
         # For phase2
         if filter_cols:
             why = " || ".join(f"toY({col})" for col in filter_cols)
         whys.append(why)
-                
-        
+
     # Final query assembly
     # -- Phase 1
     location = 0
     writelog_args = ", ".join(tuid_sources)
-    ctes = ',\n'.join(cte_parts) + (',\n' if cte_parts else '')
-    join_tables = '\n      '.join(joins)
+    ctes = ",\n".join(cte_parts) + (",\n" if cte_parts else "")
+    join_tables = "\n      ".join(joins)
     select_cols = f"{select_table}_outer.{select_column}"
     outer_tables_sorted = sorted(outer_table_names)
-    base_from = f"{outer_tables_sorted[0]}_1 AS {outer_tables_sorted[0]}_outer"    
-    join_section = "\n".join([f"JOIN {tbl}_1 AS {tbl}_outer" for tbl in outer_tables_sorted[1:]] + [f"ON {cond}" for cond in outer_join_conditions]) if len(outer_tables_sorted) > 1 else ""
+    base_from = f"{outer_tables_sorted[0]}_1 AS {outer_tables_sorted[0]}_outer"
+    join_section = (
+        "\n".join(
+            [f"JOIN {tbl}_1 AS {tbl}_outer" for tbl in outer_tables_sorted[1:]]
+            + [f"ON {cond}" for cond in outer_join_conditions]
+        )
+        if len(outer_tables_sorted) > 1
+        else ""
+    )
     p1 = f"""
     WITH {ctes}
      filtered_{select_table}(tuid, {select_column}) AS (
@@ -559,13 +621,13 @@ def rewrite_nested_query(sql: str) -> tuple[str, str]:
     )
     SELECT * FROM filtered_{select_table};
     """.strip()
-    
+
     # -- Phase 2
     prov_cols = f"{select_table}_outer.{select_column} || wh.y AS {select_column}"
     dd_cols = f"dd(f.{select_column}) AS {select_column}"
     readlog_str = f"readlog({location}, {', '.join(readlog_args)}) AS log(tuid)"
-    from_tables_str = ',\n        '.join(from_tables_p2)
-    whys_str = ' || '.join(whys)
+    from_tables_str = ",\n        ".join(from_tables_p2)
+    whys_str = " || ".join(whys)
     p2 = f"""
     WITH filtered_{select_table}(tuid, {select_column}) AS (
       SELECT
@@ -583,113 +645,132 @@ def rewrite_nested_query(sql: str) -> tuple[str, str]:
 
     return p1, p2
 
+
 def extract_filters(expr, outer_table_names, inner_table_name, inner_table_alias):
     filter_exprs, correlation_exprs = [], []
     filter_cols, correlation_cols = [], []
     if isinstance(expr, exp.And):
-        f_exprs1, c_exprs1, f_cols1, c_cols1 = extract_filters(expr.left, outer_table_names, inner_table_name, inner_table_alias)
-        f_exprs2, c_exprs2, f_cols2, c_cols2 = extract_filters(expr.right, outer_table_names, inner_table_name, inner_table_alias)
+        f_exprs1, c_exprs1, f_cols1, c_cols1 = extract_filters(
+            expr.left, outer_table_names, inner_table_name, inner_table_alias
+        )
+        f_exprs2, c_exprs2, f_cols2, c_cols2 = extract_filters(
+            expr.right, outer_table_names, inner_table_name, inner_table_alias
+        )
         return (
             f_exprs1 + f_exprs2,
             c_exprs1 + c_exprs2,
             f_cols1 + f_cols2,
-            c_cols1 + c_cols2
+            c_cols1 + c_cols2,
         )
-    if isinstance(expr, (exp.EQ, exp.NEQ, exp.GT, exp.GTE, exp.LT, exp.LTE, exp.In, exp.Exists)):
+    if isinstance(
+        expr, (exp.EQ, exp.NEQ, exp.GT, exp.GTE, exp.LT, exp.LTE, exp.In, exp.Exists)
+    ):
         cols_updated = []
         expr_copy = copy.deepcopy(expr)
         for col in expr_copy.find_all(exp.Column):
             table = col.table
             column = col.name
-            if table in outer_table_names and table not in [inner_table_name, inner_table_alias]: # correlation
+            if table in outer_table_names and table not in [
+                inner_table_name,
+                inner_table_alias,
+            ]:  # correlation
                 col.set("this", exp.to_identifier(column))
                 col.set("table", exp.to_identifier(table + "_outer"))
-                cols_updated.append(f"{table}_outer.{column}")    
+                cols_updated.append(f"{table}_outer.{column}")
             elif table in [inner_table_name, inner_table_alias]:
                 col.set("this", exp.to_identifier(column))
                 col.set("table", exp.to_identifier(inner_table_name + "_inner"))
                 cols_updated.append(f"{inner_table_name}_inner.{column}")
         modified_sql = expr_copy.sql()
 
-        if any(any(t + "_outer" in col for t in outer_table_names) for col in cols_updated): # correlation
+        if any(
+            any(t + "_outer" in col for t in outer_table_names) for col in cols_updated
+        ):  # correlation
             correlation_exprs.append(modified_sql)
             correlation_cols.extend(cols_updated)
         else:
             filter_exprs.append(modified_sql)  # table.col = table.col
-            filter_cols.extend(cols_updated) # [table.col, table.col]
+            filter_cols.extend(cols_updated)  # [table.col, table.col]
 
     return filter_exprs, correlation_exprs, filter_cols, correlation_cols
+
 
 def extract_outer_table_name_from_subquery(inner_select):
     joins_in_subquery = inner_select.args.get("joins") or []
     for join in joins_in_subquery:
         table_expr = join.this
         if isinstance(table_expr, exp.Table):
-            table_name = table_expr.name 
+            table_name = table_expr.name
             alias = table_expr.alias or ""
-            if "_outer" in alias: 
+            if "_outer" in alias:
                 return table_name
     return None
-        
-def processing_join_in_subquery(inner_select, inner_table_alias, inner_table_name, inner_alias_name, joins, filters):
+
+
+def processing_join_in_subquery(
+    inner_select, inner_table_alias, inner_table_name, inner_alias_name, joins, filters
+):
     joins_in_subquery = inner_select.args.get("joins") or []
     join_tables = []
     join_columns = []
     join_clause_inner = []
-    
-    main_key   = inner_table_alias or inner_table_name
+
+    main_key = inner_table_alias or inner_table_name
     main_alias = inner_alias_name
-    
+
     for join in joins_in_subquery:
         table_expr = join.this
         if isinstance(table_expr, exp.Table):
-            table_name = table_expr.name    
+            table_name = table_expr.name
             table_alias = table_expr.alias
-        
+
         join_condition = join.args.get("on")
         if not join_condition:
             continue
-        
+
         join_key = table_alias or table_name
         if inner_table_alias not in joins and inner_table_name == table_name:
             base_join_stmt = f"JOIN {table_name}_1 AS {table_name}_inner"
             base_join_stmt_agg = f"JOIN agg_result_{table_name}"
-            existing_alias_count = sum(1 for j in joins if base_join_stmt in j or base_join_stmt_agg in j) + 1
+            existing_alias_count = (
+                sum(1 for j in joins if base_join_stmt in j or base_join_stmt_agg in j)
+                + 1
+            )
             join_alias = f"{table_name}_inner_{existing_alias_count}"
             join_replace_alias = lambda s: s.replace(join_key, join_alias)
             filters = [join_replace_alias(f) for f in filters]
         else:
-            join_alias, join_replace_alias = generate_unique_inner_alias(table_name, joins)
+            join_alias, join_replace_alias = generate_unique_inner_alias(
+                table_name, joins
+            )
             filters = [join_replace_alias(f) for f in filters]
-            
-        replacements = {
-            main_key: main_alias,
-            join_key: join_alias
-        }
+
+        replacements = {main_key: main_alias, join_key: join_alias}
         join_tables.append((table_name, join_alias))
-        condition_str = join_condition.sql()   
-        
+        condition_str = join_condition.sql()
+
         for old, new in replacements.items():
-            pattern     = rf'\b{re.escape(old)}\.(\w+)\b'
-            replacement = rf'{new}.\1'
+            pattern = rf"\b{re.escape(old)}\.(\w+)\b"
+            replacement = rf"{new}.\1"
             condition_str = re.sub(pattern, replacement, condition_str)
-        
+
         join_stmt = f"JOIN {table_name}_1 AS {join_alias} ON {condition_str}"
         join_clause_inner.append(join_stmt)
-        
-        parts = [p.strip() for p in condition_str.split('=')]
+
+        parts = [p.strip() for p in condition_str.split("=")]
         join_columns.extend(parts)
-    
+
     return join_tables, join_columns, join_clause_inner, filters
+
 
 def generate_unique_inner_alias(inner_table_name: str, joins: list):
     """
     Generate a unique alias for an inner table based on existing join statements.
-    
+
     Parameters:
         inner_table_name (str): The name of the inner table.
         joins (list): The list of existing join statements.
-    
+
     Returns:
         tuple: (inner_alias_name, replace_alias) where:
             - inner_alias_name (str): A unique alias for the inner table (e.g., "table_inner_1").
@@ -697,10 +778,12 @@ def generate_unique_inner_alias(inner_table_name: str, joins: list):
     """
     base_join_stmt = f"JOIN {inner_table_name}_1 AS {inner_table_name}_inner"
     base_join_stmt_agg = f"JOIN agg_result_{inner_table_name}"
-    existing_alias_count = sum(1 for j in joins if base_join_stmt in j or base_join_stmt_agg in j)
+    existing_alias_count = sum(
+        1 for j in joins if base_join_stmt in j or base_join_stmt_agg in j
+    )
     inner_alias_name = f"{inner_table_name}_inner_{existing_alias_count}"
     replace_alias = lambda s: s.replace(f"{inner_table_name}_inner", inner_alias_name)
-    
+
     return inner_alias_name, replace_alias
 
 
@@ -719,7 +802,7 @@ def rewrite_query(sql: str, deleted_columns=[], outer_col="") -> tuple[str, str]
         revised_sql = revise_select_clause(sql, deleted_columns)
     else:
         revised_sql = revise_select_clause(sql, [outer_col])
-    
+
     if is_nested_query(revised_sql):
         return rewrite_nested_query(revised_sql)
     else:
@@ -729,6 +812,7 @@ def rewrite_query(sql: str, deleted_columns=[], outer_col="") -> tuple[str, str]
         else:
             return rewrite_non_nested_query(revised_sql)
 
+
 def revise_select_clause(subquery: str, column_names: list):
     parsed = parse_one(subquery)
     select_node = parsed.find(exp.Select)
@@ -737,8 +821,7 @@ def revise_select_clause(subquery: str, column_names: list):
         if "." in column_name:
             table, col = column_name.split(".", 1)
             new_projection = exp.Column(
-                this=exp.Identifier(this=col),
-                table=exp.Identifier(this=table)
+                this=exp.Identifier(this=col), table=exp.Identifier(this=table)
             )
         else:
             new_projection = exp.Column(this=exp.Identifier(this=column_name))
