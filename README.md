@@ -8,7 +8,7 @@
   <a href="https://openreview.net/pdf?id=8KE9qvKhM4"><img src="https://img.shields.io/badge/ICLR-2026-blue.svg?style=for-the-badge" alt="ICLR 2026"></a>
   <a href="https://sparta-projectpage.github.io/"><img src="https://img.shields.io/badge/Project-Page-green.svg?style=for-the-badge" alt="Project Page"></a>
   <a href="https://huggingface.co/datasets/pshlego/SPARTA"><img src="https://img.shields.io/badge/HuggingFace-Dataset-yellow.svg?style=for-the-badge&logo=huggingface" alt="HuggingFace Dataset"></a>
-  <img src="https://img.shields.io/badge/Leaderboard-Coming%20Soon-lightgrey.svg?style=for-the-badge" alt="Leaderboard Coming Soon">
+  <a href="https://sparta.postech.ac.kr/"><img src="https://img.shields.io/badge/Leaderboard-Live-red.svg?style=for-the-badge" alt="Leaderboard"></a>
 </p>
 
 <p align="center">
